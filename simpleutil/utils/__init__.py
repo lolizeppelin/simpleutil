@@ -2,6 +2,7 @@
 from eventlet import patcher
 # 防止调用被eventlet patch过threading
 # openstack里为了避免threading被eventlet覆盖用了自写的Lock函数
+# 这里通过patcher或取原生的threading.Lock
 SingletonLock = patcher.original('threading').Lock()
 
 
