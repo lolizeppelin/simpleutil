@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from eventlet import patcher
 # 防止调用被eventlet patch过threading
+# openstack里为了避免threading被eventlet覆盖用了自写的Lock函数
 SingletonLock = patcher.original('threading').Lock()
 
 
@@ -12,10 +13,6 @@ class Singleton(type):
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             try:
-                # 通过线程锁做双重检查
-                # thread Lock必须在最初就生成实例
-                # 否则会被eventlet的monkey path覆盖
-                # openstack里为了避免这个问题用自己的lock函数
                 # 单例生成时间过长会长时间占用SingletonLock
                 # 影响到其他单例生成
                 SingletonLock.acquire()
