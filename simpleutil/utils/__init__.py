@@ -5,6 +5,8 @@ SingletonLock = patcher.original('threading').Lock()
 
 
 class Singleton(type):
+    """Metaclass for build Singleton Class
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
