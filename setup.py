@@ -19,7 +19,7 @@ f.close()
 
 setup(
     # oslo_cfg 要求 netaddr!=0.7.16,>=0.7.12 # BSD
-    install_requires=('netaddr>=0.7.5'),
+    install_requires=('netaddr>=0.7.5', 'eventlet>=0.15.2'),
     name='simpleutil',
     version=__version__,
     description='a simple copy of some utils from openstack',
