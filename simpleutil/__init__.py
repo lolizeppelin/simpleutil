@@ -2,13 +2,12 @@
 # this module must be called before eventlet.monkey_patch()
 # 这里的代码最外层init中被调用
 # 作用是在被eventlet用monkey_patch覆盖threading前生成Lock对象
+import threading
 
-
+Lock = threading.Lock()
 __version__ = '1.0.0'
 VERSION = tuple(map(int, __version__.split('.')))
 
-import threading
-Lock = threading.Lock()
 
 class Singleton(type):
     _instances = {}
