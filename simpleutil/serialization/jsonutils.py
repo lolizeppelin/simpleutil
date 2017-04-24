@@ -1,13 +1,19 @@
 import datetime
-import itertools
-import six
-import netaddr
-import uuid
-import json
 import functools
-import six.moves.xmlrpc_client as xmlrpclib
 import inspect
+import itertools
+import json
+import uuid
+import codecs
 
+import netaddr
+import six
+try:
+    import six.moves.xmlrpc_client as xmlrpclib
+except:
+    import xmlrpclib as xmlrpclib
+
+from simpleutil.utils import encodeutils
 
 PERFECT_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 _simple_types = (six.string_types + six.integer_types + (type(None), bool, float))
@@ -79,3 +85,66 @@ def to_primitive(value, convert_instances=False, convert_datetime=True,
 
 def dumps(obj, default=to_primitive, **kwargs):
     return json.dumps(obj, default=default, **kwargs)
+
+
+def loads(s, encoding='utf-8', **kwargs):
+    """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a JSON
+
+    :param s: string to deserialize
+    :param encoding: encoding used to interpret the string
+    :param kwargs: extra named parameters, please see documentation \
+    of `json.loads <https://docs.python.org/2/library/json.html#basic-usage>`_
+    :returns: python object
+    """
+    return json.loads(encodeutils.safe_decode(s, encoding), **kwargs)
+
+
+def dump_as_bytes(obj, default=to_primitive, encoding='utf-8', **kwargs):
+    """Serialize ``obj`` to a JSON formatted ``bytes``.
+
+    :param obj: object to be serialized
+    :param default: function that returns a serializable version of an object,
+                    :func:`to_primitive` is used by default.
+    :param encoding: encoding used to encode the serialized JSON output
+    :param kwargs: extra named parameters, please see documentation \
+    of `json.dumps <https://docs.python.org/2/library/json.html#basic-usage>`_
+    :returns: json formatted string
+
+    .. versionadded:: 1.10
+    """
+    serialized = dumps(obj, default=default, **kwargs)
+    if isinstance(serialized, six.text_type):
+        # On Python 3, json.dumps() returns Unicode
+        serialized = serialized.encode(encoding)
+    return serialized
+
+
+def dump(obj, fp, *args, **kwargs):
+    """Serialize ``obj`` as a JSON formatted stream to ``fp``
+
+    :param obj: object to be serialized
+    :param fp: a ``.write()``-supporting file-like object
+    :param default: function that returns a serializable version of an object,
+                    :func:`to_primitive` is used by default.
+    :param args: extra arguments, please see documentation \
+    of `json.dump <https://docs.python.org/2/library/json.html#basic-usage>`_
+    :param kwargs: extra named parameters, please see documentation \
+    of `json.dump <https://docs.python.org/2/library/json.html#basic-usage>`_
+
+    .. versionchanged:: 1.3
+       The *default* parameter now uses :func:`to_primitive` by default.
+    """
+    default = kwargs.get('default', to_primitive)
+    return json.dump(obj, fp, default=default, *args, **kwargs)
+
+
+def load(fp, encoding='utf-8', **kwargs):
+    """Deserialize ``fp`` to a Python object.
+
+    :param fp: a ``.read()`` -supporting file-like object
+    :param encoding: encoding used to interpret the string
+    :param kwargs: extra named parameters, please see documentation \
+    of `json.loads <https://docs.python.org/2/library/json.html#basic-usage>`_
+    :returns: python object
+    """
+    return json.load(codecs.getreader(encoding)(fp), **kwargs)
