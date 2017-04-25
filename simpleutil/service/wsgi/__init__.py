@@ -37,34 +37,42 @@ def controller_return_response(controller, faults=None, action_status=None):
     # 已知错误
     konwn_exceptions = faults.keys() if faults else (NotFaultsExcpetion, )
     # @webob.dec.wsgify(RequestClass=Request)
-    @webob.dec.wsgify
+    @webob.dec.wsgify()
     def resource(req):
         # wsgi.Router的_dispatch通过match找到contorler
         # 在调用contorler(req)
         # 这里就是被调用的那个contorler
         match = req.environ['wsgiorg.routing_args'][1]
-        args = match.copy()
-        # 弹出的controller是当前闭包
-        args.pop('controller', None)
-        args.pop('format', None)
-        action = args.pop('action', '__call__')
+        # args = match.copy()
+        # # 弹出的controller是当前闭包
+        # args.pop('controller', None)
+        # args.pop('format', None)
+        # action = args.pop('action', '__call__')
+        action = match.get('action', '__call__')
         # 默认content_type
+        content_type = req.content_type
         try:
-            content_type = req.content_type
             # content_type = DEFAULT_CONTENT_TYPE
             deserializer = deserializers[content_type]
             serializer = serializers[content_type]
         except KeyError:
-            body = default_serializer({'msg': 'can not find %s content_type serializer' % req.content_type})
+            body = default_serializer({'msg': 'can not find %s deserializer' % req.content_type})
             kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
             raise webob.exc.HTTPInternalServerError(**kwargs)
+        args = dict()
+        if req.body:
+            try:
+                args = deserializer(req.body)
+                if not isinstance(args, dict):
+                    args = dict(body=args)
+            except TypeError:
+                body = default_serializer({'msg': 'HTTPClientError, body cannot be deserializer'})
+                kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
+                raise webob.exc.HTTPClientError(**kwargs)
         try:
-            if req.body:
-                args['body'] = deserializer(req.body)['body']
             # controller是自由变量
             # 这个controller是外部传入的controller
             method = getattr(controller, action)
-            print action, args
             result = method(req, **args)
         except konwn_exceptions as e:
             mapped_exc = faults[e.__class__]
@@ -76,29 +84,35 @@ def controller_return_response(controller, faults=None, action_status=None):
             body = default_serializer({'msg': e.message})
             kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
             raise mapped_exc(**kwargs)
-        except webob.exc.HTTPException as e:
-            type_, value, tb = sys.exc_info()
-            if hasattr(e, 'code') and 400 <= e.code < 500:
-                msg = '%(action)s failed (client error): %(exc)s', {'action': action, 'exc': e}
-                LOG.info(msg)
-            else:
-                msg = '%s failed', action
-                LOG.exception(msg)
-            msg = 'webob HTTPException %s', msg
-            value.body = default_serializer({'msg': msg})
-            value.content_type = DEFAULT_CONTENT_TYPE
-            # value是Response对象
-            return value
         except NotImplementedError as e:
-            body = default_serializer({'msg': 'NotImplementedError %s' % e.message})
+            body = default_serializer({'msg': 'Request Failed: '
+                                              'NotImplementedError %s' % e.message})
             kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
             raise webob.exc.HTTPNotImplemented(**kwargs)
-        except Exception:
+        except webob.exc.HTTPException as e:
+            # type_, value, tb = sys.exc_info()
+            if not isinstance(e, webob.Response):
+                msg = e.message if e.message else 'unkonwon'
+                msg = 'request Failed: HTTPException Reson: %s' % msg
+                body = default_serializer({'msg': msg})
+                kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
+                raise webob.exc.HTTPInternalServerError(**kwargs)
+            if hasattr(e, 'code') and 400 <= e.code < 500:
+                msg = '%(action)s failed (client error): %(exc)s' % {'action': action, 'exc': e}
+                LOG.info(msg)
+            else:
+                msg = '%s failed' % action
+                LOG.exception(msg)
+            msg = 'Request Failed: HTTPException on %s' % msg
+            e.body = default_serializer({'msg': msg})
+            e.content_type = DEFAULT_CONTENT_TYPE
+            raise e
+        except Exception as e:
             # NOTE(jkoelker) Everything else is 500
             LOG.exception('%s failed', action)
             # Do not expose details of 500 error to clients.
             msg = 'Request Failed: internal server error while ' \
-                  'processing your request.'
+                  'processing your request. %s' % e.message
             body = default_serializer({'msg': msg})
             kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
             raise webob.exc.HTTPInternalServerError(**kwargs)
