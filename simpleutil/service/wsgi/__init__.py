@@ -93,7 +93,7 @@ def controller_return_response(controller, faults=None, action_status=None):
             # type_, value, tb = sys.exc_info()
             if not isinstance(e, webob.Response):
                 msg = e.message if e.message else 'unkonwon'
-                msg = 'request Failed: HTTPException Reson: %s' % msg
+                msg = 'Request Failed: HTTPException Reson: %s' % msg
                 body = default_serializer({'msg': msg})
                 kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
                 raise webob.exc.HTTPInternalServerError(**kwargs)
