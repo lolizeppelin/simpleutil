@@ -108,7 +108,7 @@ class RoutersBase(object):
         """Append routers.
         Subclasses should override this method to map its routes.
         添加路由
-        这里有两种实现方式
+        这里有三种实现方式
 
         1、生成ComposableRouter实例并添加到到routers列表中
            外部一次性用ComposingRouter组装routers列表中的所有路由
