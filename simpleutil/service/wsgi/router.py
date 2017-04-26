@@ -116,53 +116,32 @@ class RoutersBase(object):
         3、直接在里面写mapper.connect、mapper.collection等
         """
 
-    def _add_resource(self, mapper, controller, path, rel,
+    def _add_resource(self, mapper, controller, path,
                       get_action=None, head_action=None, get_head_action=None,
                       put_action=None, post_action=None, patch_action=None,
-                      delete_action=None, get_post_action=None,
-                      # path_vars=None, status=json_home.Status.STABLE,
-                      new_path=None):
+                      delete_action=None, get_post_action=None):
         if get_head_action:
-            getattr(controller, get_head_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=get_head_action,
                            conditions=dict(method=['GET', 'HEAD']))
         if get_action:
-            getattr(controller, get_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=get_action,
                            conditions=dict(method=['GET']))
         if head_action:
-            getattr(controller, head_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=head_action,
                            conditions=dict(method=['HEAD']))
         if put_action:
-            getattr(controller, put_action)  # ensure the attribute exists
+            # getattr(controller, put_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=put_action,
                            conditions=dict(method=['PUT']))
         if post_action:
-            getattr(controller, post_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=post_action,
                            conditions=dict(method=['POST']))
         if patch_action:
-            getattr(controller, patch_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=patch_action,
                            conditions=dict(method=['PATCH']))
         if delete_action:
-            getattr(controller, delete_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=delete_action,
                            conditions=dict(method=['DELETE']))
         if get_post_action:
-            getattr(controller, get_post_action)  # ensure the attribute exists
             mapper.connect(path, controller=controller, action=get_post_action,
                            conditions=dict(method=['GET', 'POST']))
-
-        # resource_data = dict()
-
-        # if path_vars:
-        #     resource_data['href-template'] = new_path or path
-        #     resource_data['href-vars'] = path_vars
-        # else:
-        #     resource_data['href'] = new_path or path
-
-        # json_home.Status.update_resource_data(resource_data, status)
-        # resource_data['href'] = path
-        # self.resources.append((rel, resource_data))
