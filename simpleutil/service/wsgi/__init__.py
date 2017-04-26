@@ -35,7 +35,7 @@ def controller_return_response(controller, faults=None, action_status=None):
     action_status = action_status or dict(create=201, delete=204)
     faults = faults or {}
     # 已知错误
-    konwn_exceptions = faults.keys() if faults else (NotFaultsExcpetion, )
+    konwn_exceptions = tuple(faults.keys() if faults else NotFaultsExcpetion)
     # @webob.dec.wsgify(RequestClass=Request)
     @webob.dec.wsgify()
     def resource(req):
@@ -43,13 +43,11 @@ def controller_return_response(controller, faults=None, action_status=None):
         # 在调用contorler(req)
         # 这里就是被调用的那个contorler
         match = req.environ['wsgiorg.routing_args'][1]
-        # args = match.copy()
+        args = match.copy()
         # # 弹出的controller是当前闭包
-        # args.pop('controller', None)
-        # args.pop('format', None)
-        # action = args.pop('action', '__call__')
-        action = match.get('action', '__call__')
-        # 默认content_type
+        args.pop('controller', None)
+        args.pop('format', None)
+        action = args.pop('action', '__call__')
         content_type = req.content_type
         try:
             # content_type = DEFAULT_CONTENT_TYPE
@@ -59,12 +57,9 @@ def controller_return_response(controller, faults=None, action_status=None):
             body = default_serializer({'msg': 'can not find %s deserializer' % req.content_type})
             kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
             raise webob.exc.HTTPInternalServerError(**kwargs)
-        args = dict()
         if req.body:
             try:
-                args = deserializer(req.body)
-                if not isinstance(args, dict):
-                    args = dict(body=args)
+                args['body'] = deserializer(req.body)
             except TypeError:
                 body = default_serializer({'msg': 'HTTPClientError, body cannot be deserializer'})
                 kwargs = {'body': body, 'content_type': DEFAULT_CONTENT_TYPE}
