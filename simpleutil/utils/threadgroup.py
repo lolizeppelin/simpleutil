@@ -99,4 +99,5 @@ class ThreadGroup(object):
         self._perform_action_on_threads(
             lambda x: x.wait(),
             lambda x: LOG.exception('Error waiting on thread.'))
+        # For add_thread_n
         self.pool.waitall()

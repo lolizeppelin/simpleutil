@@ -34,12 +34,14 @@ class DummyLock(object):
 
 
 class PriorityGreenlet(object):
-
+    """Greenlet with priority
+    """
     def __init__(self, priority, greenlet):
         self.priority = priority
         self.greenlet = greenlet
 
     def __lt__(self, other):
+        """Priority is the value for sort"""
         # if self.priority == priority.level:
         #     return id(self.greenlet) < id(other.greenlet)
         return self.priority < other.priority
@@ -47,7 +49,7 @@ class PriorityGreenlet(object):
 
 class PriorityLock(DummyLock):
     """lock with priority
-    a copy of Semaphore
+    code copy from Semaphore
     """
     def __init__(self):
         self.locked = False
@@ -56,6 +58,11 @@ class PriorityLock(DummyLock):
         self.priority_lock = {}
 
     def set_defalut_priority(self, priority):
+        """set defalut priority of lock
+        defalut priority is 0
+        zero is the highest lock
+        you can set it lower if you want
+        """
         if not isinstance(priority, int) or self.locked:
             raise RuntimeError('Priority not int or Lock is Locked')
         self.default_priority = priority
@@ -67,9 +74,11 @@ class PriorityLock(DummyLock):
             hub.schedule_call_global(0, waiter.greenlet.switch)
 
     def acquire(self):
+        """Alloc a lock with default priority"""
         self.acquire_with_priority(self.default_priority)
 
     def acquire_with_priority(self, priority):
+        """Implement of alloc lock"""
         current_thread = eventlet.getcurrent()
         for _waiters in self._waiters:
             # 避免当前线程再锁
@@ -79,11 +88,11 @@ class PriorityLock(DummyLock):
             locker = PriorityGreenlet(priority, current_thread)
             heapq.heappush(self._waiters, locker)
             hub.switch()
-            # self._waiters.remove(locker)
         self.locked = True
 
     @contextlib.contextmanager
     def priority(self, priority):
+        """Alloc a lock with specific priority"""
         self.acquire_with_priority(priority)
         try:
             yield
