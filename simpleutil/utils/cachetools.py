@@ -1,8 +1,7 @@
 from __future__ import absolute_import
 
-# import time
-from simpleutil.utils import timeutils
 import collections
+from simpleutil.utils import timeutils
 
 from abc import abstractmethod
 
