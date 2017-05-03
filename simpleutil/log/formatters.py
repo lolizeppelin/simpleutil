@@ -19,15 +19,16 @@ import socket
 import sys
 import traceback
 
-from dateutil import tz
 import six
+from dateutil import tz
 from six import moves
 
 # :-:
 # from oslo_context import context as context_utils
 # from oslo_serialization import jsonutils
-from simpleutil.serialization import jsonutils
-from simpleutil import context as context_utils
+from simpleutil.utils import jsonutils
+# from simpleutil import context as context_utils
+from simpleutil.utils import get_current
 
 
 def _dictify_context(context):
@@ -57,7 +58,8 @@ def _update_record_with_context(record):
     """
     context = record.__dict__.get(
         'context',
-        context_utils.get_current()
+        get_current()
+        # context_utils.get_current()
     )
     d = _dictify_context(context)
     # Copy the context values directly onto the record so they can be

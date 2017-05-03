@@ -6,10 +6,7 @@ from simpleutil import __version__
 
 try:
     from setuptools import setup
-
-
 except ImportError:
-
     from distutils.core import setup
 
 
@@ -19,6 +16,7 @@ f.close()
 
 setup(
     # oslo_cfg 要求 netaddr!=0.7.16,>=0.7.12 # BSD
+    # kombu>=3.0.25否则timeout参数有问题
     install_requires=('netaddr>=0.7.5', 'eventlet>=0.15.2'),
     name='simpleutil',
     version=__version__,

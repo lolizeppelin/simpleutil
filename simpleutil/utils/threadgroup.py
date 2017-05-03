@@ -1,9 +1,6 @@
 # -*- coding: UTF-8 -*-
 # 代码来源oslo.service-1.8.0.oslo_service.threadgroup.py
-
 from simpleutil.log import log as logging
-
-import threading
 
 import eventlet
 from eventlet import greenpool
@@ -46,19 +43,23 @@ class ThreadGroup(object):
         self.pool = greenpool.GreenPool(thread_pool_size)
         self.threads = []
 
-
     def add_thread(self, callback, *args, **kwargs):
         gt = self.pool.spawn(callback, *args, **kwargs)
         th = Thread(gt, self)
         self.threads.append(th)
         return th
 
+    def add_thread_n(self, callback, *args, **kwargs):
+        self.pool.spawn_n(callback, *args, **kwargs)
+
     def thread_done(self, thread):
         self.threads.remove(thread)
 
-
     def _perform_action_on_threads(self, action_func, on_error_func):
-        current = threading.current_thread()
+        # current = threading.current_thread()
+        # threading.current_thread is eventlet.getcurrent
+        # after patched, so do not need threading
+        current = eventlet.getcurrent()
         # Iterate over a copy of self.threads so thread_done doesn't
         # modify the list while we're iterating
         for x in self.threads[:]:
@@ -77,7 +78,6 @@ class ThreadGroup(object):
         self._perform_action_on_threads(
             lambda x: x.stop(),
             lambda x: LOG.exception('Error stopping thread.'))
-
 
     def stop(self, graceful=False):
         """stop function has the option of graceful=True/False.
@@ -99,3 +99,4 @@ class ThreadGroup(object):
         self._perform_action_on_threads(
             lambda x: x.wait(),
             lambda x: LOG.exception('Error waiting on thread.'))
+        self.pool.waitall()

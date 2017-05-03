@@ -14,8 +14,8 @@ except:
     import xmlrpclib as xmlrpclib
 
 from simpleutil.utils import encodeutils
+from simpleutil.utils.timeutils import PERFECT_TIME_FORMAT
 
-PERFECT_TIME_FORMAT = '%Y-%m-%dT%H:%M:%S.%f'
 _simple_types = (six.string_types + six.integer_types + (type(None), bool, float))
 _nasty_type_tests = [inspect.ismodule, inspect.isclass, inspect.ismethod,
                      inspect.isfunction, inspect.isgeneratorfunction,
