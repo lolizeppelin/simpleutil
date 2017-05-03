@@ -17,7 +17,7 @@ f.close()
 setup(
     # oslo_cfg 要求 netaddr!=0.7.16,>=0.7.12 # BSD
     # kombu>=3.0.25否则timeout参数有问题
-    install_requires=('netaddr>=0.7.5', 'eventlet>=0.15.2'),
+    install_requires=('netaddr>=0.7.5', 'eventlet>=0.15.2', 'six>=1.9.0'),
     name='simpleutil',
     version=__version__,
     description='a simple copy of some utils from openstack',
