@@ -1,12 +1,28 @@
 # -*- coding: UTF-8 -*-
+import time
 import heapq
 import contextlib
 
 import eventlet
 import eventlet.hubs
 import eventlet.semaphore
+import eventlet.patcher
+
+from simpleutil.utils.timeutils import monotonic
 
 hub = eventlet.hubs.get_hub()
+
+
+def avoid_making_same_scheduled_time():
+    """Default eventlet.hubs use time.time() as order key
+    time.time() can not guarantee the accuracy of time
+    If schedule_call_global too fast
+    That will lead to an order error
+    So call eventlet.sleep(0) to avoid
+    """
+    s = time.time()
+    while time.time() == s:
+        eventlet.sleep(0)
 
 
 class DummyLock(object):
@@ -27,6 +43,7 @@ class DummyLock(object):
 
     @contextlib.contextmanager
     def priority(self, priority):
+        self.acquire()
         try:
             yield
         finally:
@@ -55,7 +72,6 @@ class PriorityLock(DummyLock):
         self.locked = False
         self._waiters = []
         self.default_priority = 0
-        self.priority_lock = {}
 
     def set_defalut_priority(self, priority):
         """set defalut priority of lock
@@ -98,3 +114,58 @@ class PriorityLock(DummyLock):
             yield
         finally:
             self.release()
+
+
+class OrderedLock(DummyLock):
+
+    def __init__(self):
+        """waiters empty means not locked"""
+        self._waiters = set()
+
+    def acquire(self):
+        current_thread = eventlet.getcurrent()
+        if current_thread in self._waiters:
+            return
+        if self._waiters:
+            self._waiters.add(current_thread)
+            hub.switch()
+        else:
+            self._waiters.append(current_thread)
+
+    def release(self):
+        current_thread = eventlet.getcurrent()
+        if self._waiters:
+            last = self._waiters.pop(0)
+            if last is not current_thread:
+                hub.schedule_call_global(0, last.switch)
+                avoid_making_same_scheduled_time()
+
+    def wait(self, timeout=None):
+        current_thread = eventlet.getcurrent()
+        if current_thread in self._waiters:
+            return
+        if timeout is None:
+            self.acquire()
+        else:
+            s = monotonic()
+            while True:
+                if self._waiters:
+                    if monotonic() - s >= timeout:
+                        return
+                    eventlet.sleep(0)
+                else:
+                    self.acquire()
+
+    def notify(self):
+        current_thread = eventlet.getcurrent()
+        if self._waiters:
+            last = self._waiters.pop(0)
+            if last is not current_thread:
+                hub.schedule_call_global(0, last.switch)
+                avoid_making_same_scheduled_time()
+
+    def notify_all(self):
+        while self._waiters:
+            self.notify()
+
+    notifyAll = notify_all
