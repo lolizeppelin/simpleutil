@@ -6,7 +6,6 @@ import contextlib
 import eventlet
 import eventlet.hubs
 import eventlet.semaphore
-import eventlet.patcher
 
 from simpleutil.utils.timeutils import monotonic
 
