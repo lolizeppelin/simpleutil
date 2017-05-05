@@ -63,7 +63,7 @@ class ThreadGroup(object):
         # Iterate over a copy of self.threads so thread_done doesn't
         # modify the list while we're iterating
         for x in self.threads[:]:
-            if x.ident == current.ident:
+            if x.ident == id(current):
                 # Don't perform actions on the current thread.
                 continue
             try:
