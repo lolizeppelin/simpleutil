@@ -23,9 +23,10 @@ _nasty_type_tests = [inspect.ismodule, inspect.isclass, inspect.ismethod,
                      inspect.iscode, inspect.isbuiltin, inspect.isroutine,
                      inspect.isabstract]
 
+MAX_DEEP = 5
 
 def to_primitive(value, convert_instances=False, convert_datetime=True,
-                 level=0, max_depth=3):
+                 level=0, max_depth=MAX_DEEP):
     if isinstance(value, _simple_types):
         return value
 
