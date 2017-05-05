@@ -13,3 +13,5 @@ simpleutil
 在lockutils中通过eventlet实现一个优先级锁PriorityLock,作用参考oslo_messaging._drivers.impl_rabbit中的ConnectionLock
 
 在lockutils中通过eventlet实现一个顺序锁OrderedLock,作用参考_OrderedTask中调用的threading.Condition
+
+在uuidutils中实现了一个全局主键生成类,原理类似Snowflake

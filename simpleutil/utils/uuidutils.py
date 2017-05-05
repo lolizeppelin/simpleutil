@@ -1,26 +1,8 @@
-# Copyright (c) 2012 Intel Corporation.
-# All Rights Reserved.
-#
-#    Licensed under the Apache License, Version 2.0 (the "License"); you may
-#    not use this file except in compliance with the License. You may obtain
-#    a copy of the License at
-#
-#         http://www.apache.org/licenses/LICENSE-2.0
-#
-#    Unless required by applicable law or agreed to in writing, software
-#    distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-#    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-#    License for the specific language governing permissions and limitations
-#    under the License.
-
-"""
-UUID related utilities and helper functions.
-
-.. versionadded:: 1.1
-"""
-
+import time
+import struct
 import uuid
 
+from simpleutil.utils.timeutils import monotonic
 
 def generate_uuid():
     """Creates a random uuid string.
@@ -52,3 +34,52 @@ def is_uuid_like(val):
         return str(uuid.UUID(val)).replace('-', '') == _format_uuid_string(val)
     except (TypeError, ValueError, AttributeError):
         return False
+
+
+class Gprimarykey(object):
+    """A global primark key maker like Snowflake
+    0-47  time
+    48-55 sid  max 255
+    56-63 sequence  max 255
+    """
+
+    PREFIX = chr(0)*2
+
+    def __init__(self, sid,
+                 diff=int(time.time()*1000) - int(monotonic()*1000),
+                 ):
+        self.__diff = diff
+        self.__last = 0
+        self.__sequence = 0
+        self.__mark = sid
+
+    def update_diff(self, diff):
+        self.__diff = diff
+
+    def __call__(self):
+        return self.makekey(self.__mark)
+
+    def makekey(self, sid):
+        """Make a global primark key"""
+        cur = int(monotonic()*1000) + self.__diff
+        if self.__last == cur:
+            if self.__sequence >= 255:
+                time.sleep(0.001)
+                # recursive call
+                return self.__call__()
+            self.__sequence += 1
+        else:
+            self.__sequence = 0
+            self.__last = cur
+        return struct.unpack('>Q', struct.pack('>QBB', cur, sid, self.__sequence)[2:])[0]
+
+    def format(self, key):
+        if isinstance(key, (int, long)):
+            key = struct.pack('>Q', key)
+        return struct.unpack('>QBB', Gprimarykey.PREFIX + key)
+
+    def timeformat(self, key):
+        return self.format(key)[0]
+
+    def sidformat(self, key):
+        return self.format(key)[1]
