@@ -15,3 +15,5 @@ simpleutil
 在lockutils中通过eventlet实现一个顺序锁OrderedLock,作用参考_OrderedTask中调用的threading.Condition
 
 在uuidutils中实现了一个全局主键生成器Gprimarykey,原理类似Snowflake
+
+在timutils中通过monotonic实现一个用于获取等同于time.time()值但不受系统时间变更影响的函数

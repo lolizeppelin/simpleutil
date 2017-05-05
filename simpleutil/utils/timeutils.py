@@ -17,6 +17,7 @@
 Time related utilities and helper functions.
 """
 import os
+import time
 import sys
 import ctypes
 import ctypes.util
@@ -266,3 +267,19 @@ class StopWatch(object):
         self._stopped_at = monotonic()
         self._state = self._STOPPED
         return self
+
+
+class RealNow(object):
+
+    def __init__(self,
+                 diff=time.time() - monotonic(),
+                 ):
+        self.__diff = diff
+
+    def update_diff(self, diff):
+        self.__diff = diff
+
+    def __call__(self):
+        return monotonic() + self.__diff
+
+realnow = RealNow()
