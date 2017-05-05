@@ -14,4 +14,4 @@ simpleutil
 
 在lockutils中通过eventlet实现一个顺序锁OrderedLock,作用参考_OrderedTask中调用的threading.Condition
 
-在uuidutils中实现了一个全局主键生成类,原理类似Snowflake
+在uuidutils中实现了一个全局主键生成器Gprimarykey,原理类似Snowflake
