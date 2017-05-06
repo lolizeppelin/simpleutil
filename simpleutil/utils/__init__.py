@@ -20,7 +20,7 @@ class Singleton(type):
                 # 单例生成时间过长会长时间占用SingletonLock
                 # 影响到其他单例生成
                 # 单利初始化的时候,内部不能再有单例在初始化
-                # 否则色会死锁,请避免单例嵌套
+                # 否则会死锁,请避免单例嵌套
                 if cls not in cls._instances:
                     cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
