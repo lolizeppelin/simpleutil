@@ -28,7 +28,7 @@ _DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 #                       'keystoneauth=WARN', 'oslo.cache=INFO',
 #                       'dogpile.core.dogpile=INFO']
 
-DEFAULT_LOG_LEVELS = ['center=WARN']
+DEFAULT_LOG_LEVELS = ['center=WARN', 'agent=WARN']
 
 _IGNORE_MESSAGE = "This option is ignored if log_config_append is set."
 
@@ -49,7 +49,6 @@ common_cli_opts = [
 logging_cli_opts = [
     cfg.StrOpt('log-config-append',
                metavar='PATH',
-               deprecated_name='log-config',
                help='The name of a logging configuration file. This file '
                     'is appended to any existing logging configuration '
                     'files. For details about logging configuration files, '
@@ -66,13 +65,11 @@ logging_cli_opts = [
                     + _IGNORE_MESSAGE),
     cfg.StrOpt('log-file',
                metavar='PATH',
-               deprecated_name='logfile',
                help='(Optional) Name of log file to send logging output to. '
                     'If no default is set, logging will go to stderr as '
                     'defined by use_stderr. '
                     + _IGNORE_MESSAGE),
     cfg.StrOpt('log-dir',
-               deprecated_name='logdir',
                help='(Optional) The base directory used for relative log_file '
                     ' paths. '
                     + _IGNORE_MESSAGE),
