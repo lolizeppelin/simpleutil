@@ -158,7 +158,7 @@ class OrderedLock(DummyLock):
     def notify(self):
         current_thread = eventlet.getcurrent()
         if self._waiters:
-            last = self._waiters.pop(0)
+            last = self._waiters.pop()
             if last is not current_thread:
                 hub.schedule_call_global(0, last.switch)
                 avoid_making_same_scheduled_time()
