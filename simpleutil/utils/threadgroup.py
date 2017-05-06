@@ -8,6 +8,15 @@ from eventlet import greenpool
 LOG = logging.getLogger(__name__)
 
 
+def _on_thread_done(_greenthread, group, thread):
+    """Callback function to be passed to GreenThread.link() when we spawn().
+
+    Calls the :class:`ThreadGroup` to notify it to remove this thread from
+    the associated group.
+    """
+    group.thread_done(thread)
+
+
 class Thread(object):
     """Wrapper around a greenthread.
 
@@ -17,7 +26,7 @@ class Thread(object):
     """
     def __init__(self, thread, group):
         self.thread = thread
-        self.thread.link(group.thread_done, self)
+        self.thread.link(_on_thread_done, group, self)
         self._ident = id(thread)
 
     @property
