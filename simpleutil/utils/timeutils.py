@@ -18,6 +18,7 @@ Time related utilities and helper functions.
 """
 import os
 import time
+import datetime
 import sys
 import ctypes
 import ctypes.util
@@ -83,6 +84,10 @@ if monotonic() - monotonic() > 0:
 
 now = monotonic
 
+def utcnow(t=None):
+    if not t:
+        t = realnow()
+    return datetime.datetime.fromtimestamp(t)
 
 class Split(object):
     """A *immutable* stopwatch split.
