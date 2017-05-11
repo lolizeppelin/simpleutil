@@ -19,7 +19,7 @@ Reflection module.
 
 .. versionadded:: 1.1
 """
-
+import warnings
 import inspect
 import types
 import six
@@ -215,3 +215,197 @@ def is_subclass(obj, cls):
 #     sig = get_signature(function)
 #     return any(p.kind == Parameter.VAR_KEYWORD
 #                for p in six.itervalues(sig.parameters))
+
+#  --------------code from python2-debtcollector-1.3.0-1.el7---------------------
+
+_enabled = True
+
+def get_qualified_name(obj):
+    # Prefer the py3.x name (if we can get at it...)
+    try:
+        return (True, obj.__qualname__)
+    except AttributeError:
+        return (False, obj.__name__)
+
+
+def _get_qualified_name(obj):
+    return get_qualified_name(obj)[1]
+
+
+def deprecation(message, stacklevel=None, category=None):
+    """Warns about some type of deprecation that has been (or will be) made.
+
+    This helper function makes it easier to interact with the warnings module
+    by standardizing the arguments that the warning function recieves so that
+    it is easier to use.
+
+    This should be used to emit warnings to users (users can easily turn these
+    warnings off/on, see https://docs.python.org/2/library/warnings.html
+    as they see fit so that the messages do not fill up the users logs with
+    warnings that they do not wish to see in production) about functions,
+    methods, attributes or other code that is deprecated and will be removed
+    in a future release (this is done using these warnings to avoid breaking
+    existing users of those functions, methods, code; which a library should
+    avoid doing by always giving at *least* N + 1 release for users to address
+    the deprecation warnings).
+    """
+    if not _enabled:
+        return
+    if category is None:
+        category = DeprecationWarning
+    if stacklevel is None:
+        warnings.warn(message, category=category)
+    else:
+        warnings.warn(message, category=category, stacklevel=stacklevel)
+
+
+def _fetch_first_result(fget, fset, fdel, apply_func, value_not_found=None):
+    """Fetch first non-none/empty result of applying ``apply_func``."""
+    for f in filter(None, (fget, fset, fdel)):
+        result = apply_func(f)
+        if result:
+            return result
+    return value_not_found
+
+
+def generate_message(prefix, postfix=None, message=None,
+                     version=None, removal_version=None):
+    """Helper to generate a common message 'style' for deprecation helpers."""
+    message_components = [prefix]
+    if version:
+        message_components.append(" in version '%s'" % version)
+    if removal_version:
+        if removal_version == "?":
+            message_components.append(" and will be removed in a future"
+                                      " version")
+        else:
+            message_components.append(" and will be removed in version '%s'"
+                                      % removal_version)
+    if postfix:
+        message_components.append(postfix)
+    if message:
+        message_components.append(": %s" % message)
+    return ''.join(message_components)
+
+
+class removed_property(object):
+    """Property descriptor that deprecates a property.
+
+    This works like the ``@property`` descriptor but can be used instead to
+    provide the same functionality and also interact with the :mod:`warnings`
+    module to warn when a property is accessed, set and/or deleted.
+
+    :param message: string used as ending contents of the deprecate message
+    :param version: version string (represents the version this deprecation
+                    was created in)
+    :param removal_version: version string (represents the version this
+                            deprecation will be removed in); a string
+                            of '?' will denote this will be removed in
+                            some future unknown version
+    :param stacklevel: stacklevel used in the :func:`warnings.warn` function
+                       to locate where the users code is when reporting the
+                       deprecation call (the default being 3)
+    :param category: the :mod:`warnings` category to use, defaults to
+                     :py:class:`DeprecationWarning` if not provided
+    """
+
+    # Message templates that will be turned into real messages as needed.
+    _PROPERTY_GONE_TPLS = {
+        'set': "Setting the '%s' property is deprecated",
+        'get': "Reading the '%s' property is deprecated",
+        'delete': "Deleting the '%s' property is deprecated",
+    }
+
+    def __init__(self, fget=None, fset=None, fdel=None, doc=None,
+                 stacklevel=3, category=DeprecationWarning,
+                 version=None, removal_version=None, message=None):
+        self.fset = fset
+        self.fget = fget
+        self.fdel = fdel
+        self.stacklevel = stacklevel
+        self.category = category
+        self.version = version
+        self.removal_version = removal_version
+        self.message = message
+        if doc is None and inspect.isfunction(fget):
+            doc = getattr(fget, '__doc__', None)
+        self._message_cache = {}
+        self.__doc__ = doc
+
+    def _fetch_message_from_cache(self, kind):
+        try:
+            out_message = self._message_cache[kind]
+        except KeyError:
+            prefix_tpl = self._PROPERTY_GONE_TPLS[kind]
+            prefix = prefix_tpl % _fetch_first_result(
+                self.fget, self.fset, self.fdel, _get_qualified_name,
+                value_not_found="???")
+            out_message = generate_message(
+                prefix, message=self.message, version=self.version,
+                removal_version=self.removal_version)
+            self._message_cache[kind] = out_message
+        return out_message
+
+    def __call__(self, fget, **kwargs):
+        self.fget = fget
+        self.message = kwargs.get('message', self.message)
+        self.version = kwargs.get('version', self.version)
+        self.removal_version = kwargs.get('removal_version',
+                                          self.removal_version)
+        self.stacklevel = kwargs.get('stacklevel', self.stacklevel)
+        self.category = kwargs.get('category', self.category)
+        self.__doc__ = kwargs.get('doc',
+                                  getattr(fget, '__doc__', self.__doc__))
+        # Regenerate all the messages...
+        self._message_cache.clear()
+        return self
+
+    def __delete__(self, obj):
+        if self.fdel is None:
+            raise AttributeError("can't delete attribute")
+        out_message = self._fetch_message_from_cache('delete')
+        deprecation(out_message, stacklevel=self.stacklevel, category=self.category)
+        self.fdel(obj)
+
+    def __set__(self, obj, value):
+        if self.fset is None:
+            raise AttributeError("can't set attribute")
+        out_message = self._fetch_message_from_cache('set')
+        deprecation(out_message, stacklevel=self.stacklevel, category=self.category)
+        self.fset(obj, value)
+
+    def __get__(self, obj, value):
+        if obj is None:
+            return self
+        if self.fget is None:
+            raise AttributeError("unreadable attribute")
+        out_message = self._fetch_message_from_cache('get')
+        deprecation(out_message, stacklevel=self.stacklevel, category=self.category)
+        return self.fget(obj)
+
+    def getter(self, fget):
+        o = type(self)(fget, self.fset, self.fdel, self.__doc__)
+        o.message = self.message
+        o.version = self.version
+        o.stacklevel = self.stacklevel
+        o.removal_version = self.removal_version
+        o.category = self.category
+        return o
+
+    def setter(self, fset):
+        o = type(self)(self.fget, fset, self.fdel, self.__doc__)
+        o.message = self.message
+        o.version = self.version
+        o.stacklevel = self.stacklevel
+        o.removal_version = self.removal_version
+        o.category = self.category
+        return o
+
+    def deleter(self, fdel):
+        o = type(self)(self.fget, self.fset, fdel, self.__doc__)
+        o.message = self.message
+        o.version = self.version
+        o.stacklevel = self.stacklevel
+        o.removal_version = self.removal_version
+        o.category = self.category
+        return o
