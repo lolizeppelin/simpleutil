@@ -87,7 +87,7 @@ now = monotonic
 def utcnow(t=None):
     if not t:
         t = realnow()
-    return datetime.datetime.fromtimestamp(t)
+    return datetime.datetime.fromtimestamp(int(t))
 
 class Split(object):
     """A *immutable* stopwatch split.

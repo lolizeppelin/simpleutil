@@ -1,6 +1,15 @@
 # -*- coding: UTF-8 -*-
 from simpleutil.common.exceptions import InvalidArgument
 
+class IdformaterBase(object):
+    def __init__(self):
+        self._all_server_id = set()
+
+    @property
+    def all_id(self):
+        return self._all_server_id
+
+
 class Idformater(object):
     """This Descriptor code copy from Wsgify
     This class will format server_id on kwargs
@@ -16,6 +25,8 @@ class Idformater(object):
         self.all_id = None
 
     def __get__(self, instance, owner):
+        if not isinstance(instance, IdformaterBase):
+            raise TypeError('Instance not IdformaterBase')
         if hasattr(self.func, '__get__'):
             formater = self.__class__(func = self.func.__get__(instance, owner),
                                       key=self.key,
