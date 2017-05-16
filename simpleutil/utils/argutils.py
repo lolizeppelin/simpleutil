@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from simpleutil.common.exceptions import InvalidArgument
 
+
 class IdformaterBase(object):
     def __init__(self):
         self._all_server_id = set()
@@ -28,9 +29,9 @@ class Idformater(object):
         if not isinstance(instance, IdformaterBase):
             raise TypeError('Instance not IdformaterBase')
         if hasattr(self.func, '__get__'):
-            formater = self.__class__(func = self.func.__get__(instance, owner),
+            formater = self.__class__(func=self.func.__get__(instance, owner),
                                       key=self.key,
-                                      zero_as_all = self.all_key)
+                                      zero_as_all=self.all_key)
             formater.all_id = instance.all_id
             return formater
         else:

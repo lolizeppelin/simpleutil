@@ -89,6 +89,7 @@ def utcnow(t=None):
         t = realnow()
     return datetime.datetime.fromtimestamp(int(t))
 
+
 class Split(object):
     """A *immutable* stopwatch split.
 
