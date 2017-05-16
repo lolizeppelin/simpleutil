@@ -41,7 +41,7 @@ class Idformater(object):
         if self.func is None:
             return self.__class__(func=args[0],
                                   key=self.key,
-                                  zero_as_all=self.all_key)
+                                  all_key=self.all_key)
         else:
             id_string = kwargs.pop(self.key, None)
             if not isinstance(id_string, basestring):
