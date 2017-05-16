@@ -84,4 +84,4 @@ class Gprimarykey(object):
         return key >> 22
 
     def sidformat(self, key):
-        return (key & (2047 << 53) >> 42) >> 11
+        return (key & (2047 << 11)) >> 11
