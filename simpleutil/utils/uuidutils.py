@@ -1,5 +1,4 @@
 import time
-import struct
 import uuid
 
 from simpleutil.utils.timeutils import monotonic
