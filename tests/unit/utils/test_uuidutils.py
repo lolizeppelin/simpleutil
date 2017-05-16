@@ -1,17 +1,21 @@
 from simpleutil.utils.uuidutils import Gprimarykey
+import time
 
-
-guid = Gprimarykey(sid=128)
+guid = Gprimarykey(sid=1, pid=2)
 
 key = guid()
+t = int(time.time()*1000)
 
-print key, '~~~~~~~'
+print 'primary key', key
+print 'time.time',t
+print 'timeformat', guid.timeformat(key)
+print 'sid format', guid.sidformat(key)
 
-import time
-print int(time.time()*1000)
-print guid.timeformat(key)
-print guid.sidformat(key)
+# while True:
+#     x = guid()
+#     print x()
 
-while True:
-    x = guid()
-    print x
+x = '1'*11 + '0'*11
+
+x = int(x, 2)
+print 'max', x

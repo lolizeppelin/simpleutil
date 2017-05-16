@@ -38,48 +38,51 @@ def is_uuid_like(val):
 
 class Gprimarykey(object):
     """A global primark key maker like Snowflake
-    0-47  time
-    48-55 sid  max 255
-    56-63 sequence  max 255
+    0-42    time                   42  bit
+    42-53   sid       max 2047     11  bit
+    53-61   pid       max 255      8   bit
+    61-64   sequence  max 7        3   bit
     """
-
-    PREFIX = chr(0)*2
-
-    def __init__(self, sid,
+    def __init__(self, sid, pid,
                  diff=int(time.time()*1000) - int(monotonic()*1000),
                  ):
         self.__diff = diff
         self.__last = 0
         self.__sequence = 0
-        self.__mark = sid
+        if pid >=256 or sid >= 2048:
+            raise RuntimeError('sid should less then 2048 pid should less then 256')
+        self.__sid = sid
+        self.__pid = pid
 
     def update_diff(self, diff):
         self.__diff = diff
 
     def __call__(self):
-        return self.makekey(self.__mark)
+        return self.makekey(self.__sid, self.__pid)
 
-    def makekey(self, sid):
+    def makekey(self, sid, pid):
         """Make a global primark key"""
+        if pid >=256 or sid >= 2048:
+            raise RuntimeError('sid should less then 2048 pid should less then 256')
         cur = int(monotonic()*1000) + self.__diff
         if self.__last == cur:
-            if self.__sequence >= 255:
+            if self.__sequence >= 8:
                 time.sleep(0.001)
                 # recursive call
-                return self.__call__()
+                return self.makekey(sid, pid)
             self.__sequence += 1
         else:
             self.__sequence = 0
             self.__last = cur
-        return struct.unpack('>Q', struct.pack('>QBB', cur, sid, self.__sequence)[2:])[0]
-
-    def format(self, key):
-        if isinstance(key, (int, long)):
-            key = struct.pack('>Q', key)
-        return struct.unpack('>QBB', Gprimarykey.PREFIX + key)
+            # over time at 4398046511103 == 2109-05-15 15:35:11
+            part_time = cur << 22
+            part_server = sid << 11
+            part_pid = pid << 3
+            key = part_time | part_server |  part_pid | self.__sequence
+            return key
 
     def timeformat(self, key):
-        return self.format(key)[0]
+        return key >> 22
 
     def sidformat(self, key):
-        return self.format(key)[1]
+        return (key & (2047 << 53) >> 42) >> 11
