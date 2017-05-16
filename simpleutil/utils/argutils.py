@@ -55,7 +55,7 @@ class Idformater(object):
                     id_set = set(map(int, id_set))
                 except TypeError:
                     pass
-            if self.all_key:
+            if self.all_key is not None:
                 if self.all_key in id_set and len(id_set) == 1:
                     id_set = self.all_id
                 elif self.all_key in id_set and len(id_set) > 1:
