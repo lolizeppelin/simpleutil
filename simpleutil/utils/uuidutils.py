@@ -42,28 +42,48 @@ class Gprimarykey(object):
     53-61   pid       max 255      8   bit
     61-64   sequence  max 7        3   bit
     """
-    def __init__(self, sid, pid,
-                 diff=int(time.time()*1000) - int(monotonic()*1000),
+    def __init__(self,
+                 difftime=int(time.time()*1000) - int(monotonic()*1000),
                  ):
-        self.__diff = diff
-        self.__last = 0
+        self.__sid = 0
+        self.__pid = 0
+        self.__difftime = difftime
         self.__sequence = 0
-        if pid >=256 or sid >= 2048:
-            raise RuntimeError('sid should less then 2048 pid should less then 256')
+        self.__last = 0
+
+    def update_sid(self, sid):
+        if sid >= 2048:
+            raise RuntimeError('sid should less then 2048')
         self.__sid = sid
+
+    def update_pid(self, pid):
+        if pid >= 2048:
+            raise RuntimeError('pid should less then 256')
         self.__pid = pid
 
     def update_diff(self, diff):
         self.__diff = diff
 
+    @property
+    def sid(self):
+        return self.__sid
+
+    @property
+    def pid(self):
+        return self.__pid
+
+    @property
+    def difftime(self):
+        return self.__difftime
+
     def __call__(self):
         return self.makekey(self.__sid, self.__pid)
 
-    def makekey(self, sid, pid):
+    def makekey(self, sid=0, pid=0):
         """Make a global primark key"""
-        if pid >=256 or sid >= 2048:
+        if pid >= 256 or sid >= 2048:
             raise RuntimeError('sid should less then 2048 pid should less then 256')
-        cur = int(monotonic()*1000) + self.__diff
+        cur = int(monotonic()*1000) + self.__difftime
         if self.__last == cur:
             if self.__sequence >= 8:
                 time.sleep(0.001)
@@ -77,7 +97,7 @@ class Gprimarykey(object):
             part_time = cur << 22
             part_server = sid << 11
             part_pid = pid << 3
-            key = part_time | part_server |  part_pid | self.__sequence
+            key = part_time | part_server | part_pid | self.__sequence
             return key
 
     def timeformat(self, key):
@@ -85,3 +105,6 @@ class Gprimarykey(object):
 
     def sidformat(self, key):
         return (key & (2047 << 11)) >> 11
+
+
+Gkey = Gprimarykey()
