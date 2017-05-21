@@ -1,6 +1,7 @@
 simpleutil
 ==========
 
+通用工具库
 
 主要代码基于Openstack Mitaka中的oslo_cfg,oslo_log,oslo_util
 
