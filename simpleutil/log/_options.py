@@ -42,8 +42,7 @@ common_cli_opts = [
                 short='v',
                 default=True,
                 help='If set to false, the logging level will be set to '
-                     'WARNING instead of the default INFO level.',
-                deprecated_for_removal=True),
+                     'WARNING instead of the default INFO level.'),
 ]
 
 logging_cli_opts = [
