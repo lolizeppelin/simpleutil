@@ -668,3 +668,37 @@ class Hostname(ConfigType):
 
     def _formatter(self, value):
         return value
+
+
+class ImportString(ConfigType):
+
+    modregx = re.compile('^[a-z]+$')
+
+    def __init__(self, type_name='import string value'):
+        super(ImportString, self).__init__(type_name=type_name)
+
+    def __call__(self, value):
+        if len(value) < 3:
+            raise ValueError("Cannot have %s" % value)
+        if len(value) > 256:
+            raise ValueError("import string over size")
+        mod_str, _sep, class_str = value.lower().rpartition('.')
+        if _sep != '.':
+            raise ValueError("import string %s error" % value)
+        if not mod_str or class_str:
+            raise ValueError("import string %s error" % value)
+        if not re.match(self.modregx, class_str):
+            raise ValueError("import string %s error" % value)
+        for _mod_str in mod_str.split('.'):
+            if not re.match(self.modregx, _mod_str):
+                raise ValueError("import string %s error" % value)
+        return value.lower()
+
+    def __repr__(self):
+        return 'ImportString'
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return value
