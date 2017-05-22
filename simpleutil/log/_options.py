@@ -28,7 +28,13 @@ _DEFAULT_LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
 #                       'keystoneauth=WARN', 'oslo.cache=INFO',
 #                       'dogpile.core.dogpile=INFO']
 
-DEFAULT_LOG_LEVELS = ['center=WARN', 'agent=WARN']
+DEFAULT_LOG_LEVELS = ['simpleutil=WARN',
+                      'sqlalchemy=WARN',
+                      'amqp=WARN',
+                      'routes.middleware=WARN',
+                      'requests.packages.urllib3.connectionpool=WARN',
+                      'requests.packages.urllib3.util.retry=WARN',
+]
 
 _IGNORE_MESSAGE = "This option is ignored if log_config_append is set."
 
