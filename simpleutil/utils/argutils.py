@@ -26,7 +26,7 @@ class Idformater(object):
         self.func = func
         self.key = key
         self.all_key = all_key
-        self.formatfunc=formatfunc
+        self.formatfunc = formatfunc
         self.all_id = None
 
     def __get__(self, instance, owner):
@@ -53,14 +53,20 @@ class Idformater(object):
             if not isinstance(id_string, basestring):
                 raise InvalidArgument('%s not basestring' % self.key)
             id_set = set(id_string.split(','))
-            if self.formatfunc:
-                id_set = set(map(self.formatfunc, id_set))
             if self.all_key is not None:
                 if self.all_key in id_set and len(id_set) == 1:
                     id_set = self.all_id
                 elif self.all_key in id_set and len(id_set) > 1:
                     raise InvalidArgument('%s:0 with other id in same list' % self.key)
+            elif self.formatfunc:
+                try:
+                    id_set = set(map(self.formatfunc, id_set))
+                except (TypeError, ValueError) as e:
+                    raise InvalidArgument('%(key)s can not be formated: %(class)s' %
+                                          {'key': self.key,
+                                           'class': e.__class__.__name__
+                                           })
             if len(id_set) < 1:
-                InvalidArgument('%s is empty' % self.key)
+                raise InvalidArgument('%s is empty or no entity found' % self.key)
             kwargs[self.key] = id_set
         return self.func(*args, **kwargs)
