@@ -3,12 +3,13 @@ from simpleutil.common.exceptions import InvalidArgument
 
 
 class IdformaterBase(object):
-    def __init__(self):
-        self._all_id = set()
+
+    def _all_id(self):
+        raise NotImplemented
 
     @property
     def all_id(self):
-        return self._all_id
+        return self._all_id()
 
 
 class Idformater(object):
