@@ -32,6 +32,8 @@ import abc
 import netaddr
 import six
 
+from simpleutil.utils.attributes import validators
+
 
 class ConfigType(object):
     def __init__(self, type_name='unknown type'):
@@ -642,17 +644,7 @@ class Hostname(ConfigType):
 
         For more details , please see: http://tools.ietf.org/html/rfc1035
         """
-
-        if len(value) == 0:
-            raise ValueError("Cannot have an empty hostname")
-        if len(value) > 253:
-            raise ValueError("hostname is greater than 253 characters: %s"
-                             % value)
-        if value.endswith("."):
-            value = value[:-1]
-        allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
-        if any((not allowed.match(x)) for x in value.split(".")):
-            raise ValueError("%s is an invalid hostname" % value)
+        value = validators['type:hostname'](value)
         # :-:
         # 禁止使用hostnmae中包含localhost和localdomain
         disallowed = re.compile('(localhost|localdomain)', re.IGNORECASE)
@@ -708,7 +700,6 @@ class MultiImportString(ImportString):
 
     def __init__(self, type_name='multi import string'):
         super(ImportString, self).__init__(type_name=type_name)
-
 
     def __call__(self, value):
         if isinstance(value, list):
