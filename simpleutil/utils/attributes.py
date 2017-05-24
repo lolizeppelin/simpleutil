@@ -18,7 +18,7 @@ import re
 import six
 
 import netaddr
-from simpleutil.log import log as logging
+# from simpleutil.log import log as logging
 from simpleutil.utils import uuidutils
 
 # import webob.exc
@@ -29,7 +29,7 @@ from simpleutil.utils import uuidutils
 from simpleutil.common import exceptions as n_exc
 
 
-LOG = logging.getLogger(__name__)
+# LOG = logging.getLogger(__name__)
 
 ATTR_NOT_SPECIFIED = object()
 # Defining a constant to avoid repeating string literal in several modules
@@ -58,7 +58,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
         msg = ("Invalid input. '%(target_dict)s' must be a dictionary "
                  "with keys: %(expected_keys)s" %
                {'target_dict': target_dict, 'expected_keys': expected_keys})
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
     expected_keys = set(expected_keys)
@@ -72,7 +72,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
                  "Provided keys: %(provided_keys)s" %
                {'expected_keys': expected_keys,
                 'provided_keys': provided_keys})
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -99,7 +99,7 @@ def _validate_values(data, valid_values=None):
     if data not in valid_values:
         msg = ("'%(data)s' is not in %(valid_values)s" %
                {'data': data, 'valid_values': valid_values})
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -109,20 +109,20 @@ def _validate_not_empty_string(data, max_len=None):
         return msg
     if not data.strip():
         msg = "'%s' Blank strings are not permitted" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
 def _validate_string(data, max_len=None):
     if not isinstance(data, six.string_types):
         msg = "'%s' is not a valid string" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
     if max_len is not None and len(data) > max_len:
         msg = ("'%(data)s' exceeds maximum length of %(max_len)s" %
                {'data': data, 'max_len': max_len})
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -135,7 +135,7 @@ def _validate_boolean(data, valid_values=None):
         convert_to_boolean(data)
     except n_exc.InvalidInput:
         msg = "'%s' is not a valid boolean value" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -143,7 +143,7 @@ def _validate_no_whitespace(data):
     """Validates that input has no whitespace."""
     if re.search(r'\s', data):
         msg = "'%s' contains whitespace" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         raise n_exc.InvalidInput(msg=msg)
     return data
 
@@ -160,7 +160,7 @@ def _validate_mac_address(data, valid_values=None):
                     # constants.INVALID_MAC_ADDRESSES)
     if not valid_mac:
         msg = "'%s' is not a valid MAC address" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -188,10 +188,56 @@ def _validate_hostname(value):
     return value
 
 
+def _validate_port(value):
+    if isinstance(value, basestring) and value.isdigit():
+        value = int(value)
+    if isinstance(value, (int, long)):
+        if value < 1 or value > 65535:
+            raise ValueError('Port value over range')
+        return int(value)
+    raise ValueError('Port value type not int')
+
+
+def _validate_ports_range(value):
+    if isinstance(value, basestring):
+        ports_range = value.split('-')
+        if len(ports_range) == 2:
+            d_port = _validate_port(ports_range[0])
+            u_port = _validate_port(ports_range[1])
+            if u_port > d_port:
+                return ports_range
+        raise ValueError('Port range error')
+    if isinstance(value, (int, long, basestring)):
+        port = _validate_port(value)
+        return '%d-%d' % (port, port+1)
+    raise ValueError('Port range value error')
+
+
+def _validate_ports_range_list(value):
+    if isinstance(value, (int, long, basestring)):
+        return [_validate_ports_range(value), ]
+    if isinstance(value, (list, tuple)):
+        ports_range_list = []
+        for port_range in value:
+            ports_range_list.append(_validate_ports_range(port_range))
+        ports_range_list.sort(key=lambda x: int(x.split('-')[0]))
+        last = 0
+        for ports_range in ports_range_list:
+            d_port, u_port = ports_range.split('-')
+            if last == 0:
+                last = int(u_port)
+                continue
+            if int(d_port) > last:
+                raise ValueError('Port range list find duplicate ports range')
+            last = u_port
+        return ports_range_list
+    raise ValueError('Port range list type error')
+
+
 def _validate_nameservers(data, valid_values=None):
     if not hasattr(data, '__iter__'):
         msg = "Invalid data format for nameserver: '%s'" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
     hosts = []
@@ -201,11 +247,11 @@ def _validate_nameservers(data, valid_values=None):
         if msg:
             msg = "'%(host)s' is not a valid nameserver. %(msg)s" % {
                 'host': host, 'msg': msg}
-            LOG.debug(msg)
+            # LOG.debug(msg)
             return msg
         if host in hosts:
             msg = "Duplicate nameserver '%s'" % host
-            LOG.debug(msg)
+            # LOG.debug(msg)
             return msg
         hosts.append(host)
 
@@ -223,14 +269,14 @@ def _validate_regex(data, valid_values=None):
         pass
 
     msg = "'%s' is not a valid input" % data
-    LOG.debug(msg)
+    # LOG.debug(msg)
     return msg
 
 
 def _validate_uuid(data, valid_values=None):
     if not uuidutils.is_uuid_like(data):
         msg = "'%s' is not a valid UUID" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -254,7 +300,7 @@ def _validate_dict_item(key, key_validator, data):
                 val_func = validators[k]
             except KeyError:
                 msg = "Validator '%s' does not exist." % k
-                LOG.debug(msg)
+                # LOG.debug(msg)
                 return msg
             val_params = v
             break
@@ -266,7 +312,7 @@ def _validate_dict_item(key, key_validator, data):
 def _validate_dict(data, key_specs=None):
     if not isinstance(data, dict):
         msg = "'%s' is not a dictionary" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
     # Do not perform any further validation, if no constraints are supplied
     if not key_specs:
@@ -300,12 +346,12 @@ def _validate_non_negative(data, valid_values=None):
         data = int(data)
     except (ValueError, TypeError):
         msg = "'%s' is not an integer" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
     if data < 0:
         msg = "'%s' should be non-negative" % data
-        LOG.debug(msg)
+        # LOG.debug(msg)
         return msg
 
 
@@ -427,6 +473,9 @@ validators = {'type:dict': _validate_dict,
               'type:hostname': _validate_hostname,
               'type:ip_address_or_none': _validate_ip_address_or_none,
               'type:mac_address': _validate_mac_address,
+              'type:port': _validate_port,
+              'type:ports_range': _validate_ports_range,
+              'type:ports_range_list': _validate_ports_range_list,
               'type:nameservers': _validate_nameservers,
               'type:non_negative': _validate_non_negative,
               'type:regex': _validate_regex,
