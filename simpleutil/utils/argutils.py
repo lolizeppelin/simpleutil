@@ -3,8 +3,10 @@ from simpleutil.common.exceptions import InvalidArgument
 
 
 class IdformaterBase(object):
+    """使用下面Idformater描述器的类需要继承这个类"""
 
     def _all_id(self):
+        """返回具体的所有id"""
         raise NotImplemented
 
     @property
@@ -18,8 +20,8 @@ class Idformater(object):
     Instance must has attr all_id
     这里的描述器实现参考来源是webob.dec.wsgify
     作用在于格式化传入的id转为校验后的list
-    使用这个描述其的类必须有一个all_id属性返回为set
-    all_key不为None的时候,当id值为all_key的时候表示所有id
+    使用这个描述其的类必须继承自IdformaterBase
+    all_key不为None的时候,当id等于all_key的时候表示所有id
     formatfunc每个id都被formatfunc格式化处理
     """
     def __init__(self, func=None, key='id', all_key=None, formatfunc=None):
@@ -67,6 +69,6 @@ class Idformater(object):
                                            'class': e.__class__.__name__
                                            })
             if len(id_set) < 1:
-                raise InvalidArgument('%s is empty or no entity found' % self.key)
+                raise InvalidArgument('No entity found for %s' % self.key)
             kwargs[self.key] = id_set
         return self.func(*args, **kwargs)
