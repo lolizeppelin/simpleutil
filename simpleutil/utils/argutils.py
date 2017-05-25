@@ -39,7 +39,8 @@ class Idformater(object):
                                       key=self.key,
                                       all_key=self.all_key,
                                       formatfunc=self.formatfunc)
-            formater.all_id = instance.all_id
+            if self.all_key is not None:
+                formater.all_id = instance.all_id
             return formater
         else:
             return self
@@ -53,14 +54,16 @@ class Idformater(object):
         else:
             id_string = kwargs.pop(self.key, None)
             if not isinstance(id_string, basestring):
-                raise InvalidArgument('%s not basestring' % self.key)
+                raise InvalidArgument('%s is None or not basestring' % self.key)
+            match_all = False
             id_set = set(id_string.split(','))
             if self.all_key is not None:
                 if self.all_key in id_set and len(id_set) == 1:
                     id_set = self.all_id
+                    match_all = True
                 elif self.all_key in id_set and len(id_set) > 1:
                     raise InvalidArgument('%s:0 with other id in same list' % self.key)
-            elif self.formatfunc:
+            if self.formatfunc and not match_all:
                 try:
                     id_set = set(map(self.formatfunc, id_set))
                 except (TypeError, ValueError) as e:
