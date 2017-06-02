@@ -205,7 +205,7 @@ def _validate_ports_range(value):
             d_port = _validate_port(ports_range[0])
             u_port = _validate_port(ports_range[1])
             if u_port > d_port:
-                return ports_range
+                return value
         raise ValueError('Port range error')
     if isinstance(value, (int, long, basestring)):
         port = _validate_port(value)
@@ -223,12 +223,12 @@ def _validate_ports_range_list(value):
         ports_range_list.sort(key=lambda x: int(x.split('-')[0]))
         last = 0
         for ports_range in ports_range_list:
-            d_port, u_port = ports_range.split('-')
+            d_port, u_port = map(int, ports_range.split('-'))
             if last == 0:
-                last = int(u_port)
+                last = u_port
                 continue
-            if int(d_port) > last:
-                raise ValueError('Port range list find duplicate ports range')
+            if d_port < last:
+                raise ValueError('Port range find duplicate ports range')
             last = u_port
         return ports_range_list
     raise ValueError('Port range list type error')
