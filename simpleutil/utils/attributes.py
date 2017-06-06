@@ -164,14 +164,13 @@ def _validate_mac_address(data, valid_values=None):
         return msg
 
 
-def _validate_ip_address(data, valid_values=None):
-    msg = None
+def _validate_ip_address(data):
     _validate_no_whitespace(data)
     if not netaddr.valid_ipv4(data, netaddr.core.INET_PTON) \
             and not netaddr.valid_ipv6(data, netaddr.core.INET_PTON):
         msg = "'%s' not ip address" % data
         raise n_exc.InvalidInput(msg=msg)
-    return msg
+    return data
 
 
 def _validate_hostname(value):
