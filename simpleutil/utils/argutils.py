@@ -29,7 +29,7 @@ class Idformater(object):
         self.func = func
         self.key = key
         if magic not in ('all', 'onlyone'):
-            raise ValueError("Magic not in 'onlyone' or 'all'")
+            raise ValueError("Magic not 'onlyone' or 'all'")
         self.magic = magic
         self.formatfunc = formatfunc
         self.all_id = None
@@ -58,15 +58,15 @@ class Idformater(object):
             id_string = kwargs.pop(self.key, None)
             if not isinstance(id_string, basestring):
                 raise InvalidArgument('%s is None or not basestring' % self.key)
-            match_all = False
             id_set = set(id_string.split(','))
             if self.magic == "all":
                 if self.magic in id_set and len(id_set) == 1:
                     id_set = self.all_id
-                    match_all = True
-                elif self.magic in id_set and len(id_set) > 1:
-                    raise InvalidArgument('%s:0 with other id in same list' % self.key)
-            if self.formatfunc and not match_all:
+                    if len(id_set) > 0:
+                        kwargs[self.key] = id_set
+                        return self.func(*args, **kwargs)
+                raise InvalidArgument('%s:0 with other id in same list' % self.key)
+            if self.formatfunc:
                 try:
                     id_set = set(map(self.formatfunc, id_set))
                 except (TypeError, ValueError) as e:
