@@ -191,6 +191,15 @@ class KeywordArgumentAdapter(BaseLoggerAdapter):
 
         return msg, kwargs
 
+    def database(self, message, data, raw_data=None):
+        dbapi = getattr(self, 'dbapi', default=None)
+        if not dbapi:
+            self.error('not dbapi found, can not log to database')
+        else:
+            try:
+                dbapi.add(message, data, raw_data)
+            except:
+                self.error('dbapi error, can not log to database')
 
 def _create_logging_excepthook(product_name):
     def logging_excepthook(exc_type, value, tb):
