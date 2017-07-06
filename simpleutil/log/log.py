@@ -191,16 +191,6 @@ class KeywordArgumentAdapter(BaseLoggerAdapter):
 
         return msg, kwargs
 
-    def database(self, message, data, raw_data=None):
-        if not hasattr(self, 'dbinsert'):
-            self.error('not dbinsert attr found, can not log to database')
-        else:
-            dbinsert = getattr(self, 'dbinsert')
-            try:
-                dbinsert(message, data, raw_data)
-            except:
-                self.error('call dbinsert error, can not log to database')
-
 def _create_logging_excepthook(product_name):
     def logging_excepthook(exc_type, value, tb):
         extra = {'exc_info': (exc_type, value, tb)}
