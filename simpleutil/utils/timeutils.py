@@ -19,6 +19,7 @@ Time related utilities and helper functions.
 import os
 import time
 import datetime
+import ntplib
 import sys
 import ctypes
 import ctypes.util
@@ -33,6 +34,7 @@ PERFECT_TIME_FORMAT = _ISO8601_TIME_FORMAT_SUBSECOND
 _BUILTIN_MODULES = ('builtins', '__builtin__', '__builtins__', 'exceptions')
 _MAX_DATETIME_SEC = 59
 
+ntpclinet = ntplib.NTPClient()
 
 # copy from monotonic
 if os.name == 'nt':
@@ -288,4 +290,13 @@ class RealNow(object):
     def __call__(self):
         return monotonic() + self.__diff
 
+
 realnow = RealNow()
+
+
+def ntptime(host, version=2, port=123, timeout=5):
+    try:
+        stat = ntpclinet.request(host, version, port, timeout=timeout)
+    except ntplib.NTPException as e:
+        raise RuntimeError('NTP error: ' + e.message)
+    return stat
