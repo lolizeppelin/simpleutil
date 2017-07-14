@@ -15,11 +15,13 @@
 
 import functools
 import re
+import os
 import six
 
 import netaddr
 # from simpleutil.log import log as logging
 from simpleutil.utils import uuidutils
+from simpleutil.utils import sysemutils
 
 # import webob.exc
 
@@ -231,6 +233,28 @@ def _validate_ports_range_list(value):
             last = u_port
         return ports_range_list
     raise ValueError('Port range list type error')
+
+
+
+def _validate_folder_path(value):
+    if not isinstance(value, basestring):
+        raise TypeError('folder path value not basestring')
+    if not os.path.exists(value) or os.path.isdir(value):
+        raise TypeError('%s not exist or not a path of folder')
+    free_bytes_of_partion = sysemutils.get_partion_free_bytes(value)
+    if free_bytes_of_partion < 104857600:
+        raise ValueError('%s free space less then 100 MB')
+    return value
+
+
+def _validate_folder_path_list(value):
+    if isinstance(value, basestring):
+        return [_validate_folder_path(value), ]
+    if isinstance(value, (list, tuple)):
+        validated_list = []
+        for folder_path in set(value):
+            validated_list.append(_validate_folder_path(folder_path))
+        return validated_list
 
 
 def _validate_nameservers(data, valid_values=None):
@@ -484,4 +508,7 @@ validators = {'type:dict': _validate_dict,
               'type:uuid_list': _validate_uuid_list,
               'type:values': _validate_values,
               'type:boolean': _validate_boolean,
-              'type:list_of_unique_strings': validate_list_of_unique_strings}
+              'type:list_of_unique_strings': validate_list_of_unique_strings,
+              'type:folder_path': _validate_folder_path,
+              'type:folder_path_list': _validate_folder_path_list,
+              }
