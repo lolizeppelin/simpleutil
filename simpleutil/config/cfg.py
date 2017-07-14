@@ -909,6 +909,17 @@ class PortOpt(Opt):
         super(PortOpt, self).__init__(name, type=type, **kwargs)
 
 
+class PortRangeOpt(Opt):
+    """Option for a TCP/IP port list."""
+    def __init__(self, name, **kwargs):
+        super(PortRangeOpt, self).__init__(name, type=types.PortRange(), **kwargs)
+
+
+class FolderPathOpt(Opt):
+    def __init__(self, name, **kwargs):
+        super(FolderPathOpt, self).__init__(name, type=types.FolderPath(), **kwargs)
+
+
 class HostnameOpt(Opt):
 
     """Option for a hostname.  Only accepts valid hostnames.

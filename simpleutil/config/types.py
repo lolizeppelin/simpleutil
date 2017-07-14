@@ -618,6 +618,28 @@ class IPAddress(ConfigType):
         return value
 
 
+class PortRange(ConfigType):
+    """PortRanges type.
+    :param type_name: Type name to be used in the sample config file.
+    """
+    def __init__(self, type_name='port_ranges value'):
+        super(PortRange, self).__init__(type_name=type_name)
+
+    def __call__(self, value):
+        return validators['type:ports_range'](value)
+
+
+class FolderPath(ConfigType):
+    """FolderPath type.
+    :param type_name: Type name to be used in the sample config file.
+    """
+    def __init__(self, type_name='folder path'):
+        super(FolderPath, self).__init__(type_name=type_name)
+
+    def __call__(self, value):
+        return validators['type:folder_path'](value)
+
+
 class Hostname(ConfigType):
     """Hostname type.
 
