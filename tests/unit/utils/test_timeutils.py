@@ -14,7 +14,7 @@ print datetime.datetime.fromtimestamp(int(y))
 
 print 'ntp check===============\n\n'
 
-stat = timeutils.ntptime('172.20.0.3')
+stat = timeutils.ntptime('172.17.0.3', version=4)
 
 cur = timeutils.realnow()
 print '=====%.6f' % cur
