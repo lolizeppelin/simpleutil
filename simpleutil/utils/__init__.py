@@ -34,6 +34,5 @@ def get_current():
     return getattr(_threadlocal, 'context', None)
 
 
-
 # 单例专用装饰器
 singleton = six.add_metaclass(Singleton)
