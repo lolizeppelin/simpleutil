@@ -244,7 +244,7 @@ def _validate_folder_path(value):
     free_bytes_of_partion = sysemutils.get_partion_free_bytes(value)
     if free_bytes_of_partion < 104857600:
         raise ValueError('%s free space less then 100 MB')
-    return value
+    return os.path.abspath(value)
 
 
 def _validate_folder_path_list(value):
