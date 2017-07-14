@@ -241,10 +241,12 @@ def _validate_folder_path(value):
         raise TypeError('folder path value not basestring')
     if not os.path.exists(value) or os.path.isdir(value):
         raise TypeError('%s not exist or not a path of folder')
+    if not os.path.abspath(value) != value:
+        raise ValueError('Path value must be abspath')
     free_bytes_of_partion = sysemutils.get_partion_free_bytes(value)
     if free_bytes_of_partion < 104857600:
         raise ValueError('%s free space less then 100 MB')
-    return os.path.abspath(value)
+    return value
 
 
 def _validate_folder_path_list(value):
