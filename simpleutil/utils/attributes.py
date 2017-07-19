@@ -176,11 +176,15 @@ def _validate_ip_address(data):
 
 
 def _validate_hostname(value):
+    if not isinstance(value, basestring):
+        raise TypeError('Host name must be basestring')
     if len(value) == 0:
         raise ValueError("Cannot have an empty hostname")
     if len(value) > 253:
-        raise ValueError("hostname is greater than 253 characters: %s"
+        raise ValueError("Hostname is greater than 253 characters: %s"
                          % value)
+    if netaddr.valid_ipv4(value, netaddr.core.INET_PTON):
+        return value
     if value.endswith("."):
         value = value[:-1]
     allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
