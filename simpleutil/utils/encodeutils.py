@@ -119,6 +119,28 @@ def to_utf8(text):
                         % type(text).__name__)
 
 
+def _safe_encode_without_obj(data):
+    if isinstance(data, six.string_types):
+        return safe_encode(data)
+    return data
+
+
+def safe_encode_list(data):
+    return list(map(_safe_encode_without_obj, data))
+
+
+def safe_encode_dict(data):
+    def _encode_item(item):
+        k, v = item
+        if isinstance(v, list):
+            return (k, safe_encode_list(v))
+        elif isinstance(v, dict):
+            return (k, safe_encode_dict(v))
+        return (k, _safe_encode_without_obj(v))
+
+    return dict(list(map(_encode_item, data.items())))
+
+
 def exception_to_unicode(exc):
     """Get the message of an exception as a Unicode string.
 
