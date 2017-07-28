@@ -57,7 +57,7 @@ class Gprimarykey(object):
         self.__sid = sid
 
     def update_pid(self, pid):
-        if pid >= 2048:
+        if pid >= 256:
             raise RuntimeError('pid should less then 256')
         self.__pid = pid
 
