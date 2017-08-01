@@ -7,7 +7,7 @@ class IdformaterBase(object):
 
     def _all_id(self):
         """返回具体的所有id"""
-        raise NotImplemented
+        raise NotImplementedError
 
     @property
     def all_id(self):
