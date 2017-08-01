@@ -183,10 +183,27 @@ def _validate_hostname(value):
     if len(value) > 253:
         raise ValueError("Hostname is greater than 253 characters: %s"
                          % value)
-    if netaddr.valid_ipv4(value, netaddr.core.INET_PTON):
-        return value
     if value.endswith("."):
         value = value[:-1]
+    allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
+    if any((not allowed.match(x)) for x in value.split(".")):
+        raise ValueError("%s is an invalid hostname" % value)
+    return value
+
+
+def _validate_hostname_or_ip(value):
+    if not isinstance(value, basestring):
+        raise TypeError('Host name or ip address must be basestring')
+    if len(value) == 0:
+        raise ValueError("Cannot have an empty hostname or ip address")
+    if len(value) > 253:
+        raise ValueError("Hostname or ip address is greater than 253 characters: %s"
+                         % value)
+    if value.endswith("."):
+        value = value[:-1]
+    _validate_no_whitespace(value)
+    if netaddr.valid_ipv4(value, netaddr.core.INET_PTON):
+        return value
     allowed = re.compile("(?!-)[A-Z0-9-]{1,63}(?<!-)$", re.IGNORECASE)
     if any((not allowed.match(x)) for x in value.split(".")):
         raise ValueError("%s is an invalid hostname" % value)
@@ -500,6 +517,7 @@ validators = {'type:dict': _validate_dict,
               'type:dict_or_empty': _validate_dict_or_empty,
               'type:ip_address': _validate_ip_address,
               'type:hostname': _validate_hostname,
+              'type:hostname_or_ip': _validate_hostname_or_ip,
               'type:ip_address_or_none': _validate_ip_address_or_none,
               'type:mac_address': _validate_mac_address,
               'type:port': _validate_port,

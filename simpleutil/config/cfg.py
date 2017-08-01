@@ -934,6 +934,21 @@ class HostnameOpt(Opt):
                                           **kwargs)
 
 
+class HostnameOrIPOpt(Opt):
+
+    """Option for a hostname.  Only accepts valid hostnames.
+
+    Option with ``type`` :class:`oslo_config.types.Hostname`
+
+    .. versionadded:: 3.8
+    """
+
+    def __init__(self, name, **kwargs):
+        super(HostnameOrIPOpt, self).__init__(name, type=types.HostnameOrIP(),
+                                          **kwargs)
+
+
+
 class MultiOpt(Opt):
 
     """Multi-value option.

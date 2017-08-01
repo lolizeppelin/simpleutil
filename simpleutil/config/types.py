@@ -684,6 +684,50 @@ class Hostname(ConfigType):
         return value
 
 
+class HostnameOrIP(ConfigType):
+    """Hostname type.
+
+    A hostname refers to a valid DNS or hostname. It must not be longer than
+    253 characters, have a segment greater than 63 characters, nor start or
+    end with a hyphen.
+
+    :param type_name: Type name to be used in the sample config file.
+
+    """
+
+    def __init__(self, type_name='hostname or ip value'):
+        super(HostnameOrIP, self).__init__(type_name=type_name)
+
+    def __call__(self, value):
+        """Check hostname is valid.
+
+        Ensures that each segment
+        - Contains at least one character and a maximum of 63 characters
+        - Consists only of allowed characters: letters (A-Z and a-z),
+          digits (0-9), and hyphen (-)
+        - Does not begin or end with a hyphen
+        - maximum total length of 253 characters
+
+        For more details , please see: http://tools.ietf.org/html/rfc1035
+        """
+        value = validators['type:hostname_or_ip'](value)
+        # :-:
+        # 禁止使用hostnmae中包含localhost和localdomain和127.0.0.1
+        disallowed = re.compile('(localhost|localdomain|127.0.0.1)', re.IGNORECASE)
+        if any((disallowed.search(x)) for x in value.split(".")):
+            raise ValueError("%s is an invalid hostname, localhost or localdomain is forbidden" % value)
+        return value
+
+    def __repr__(self):
+        return 'Hostname'
+
+    def __eq__(self, other):
+        return self.__class__ == other.__class__
+
+    def _formatter(self, value):
+        return value
+
+
 class ImportString(ConfigType):
 
     modregx = re.compile('^[a-z_]+$')
