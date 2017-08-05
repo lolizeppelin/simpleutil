@@ -4,7 +4,6 @@ import sys
 import atexit
 import socket
 import contextlib
-import fcntl
 import pwd
 import grp
 import fcntl
