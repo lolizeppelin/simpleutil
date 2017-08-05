@@ -40,6 +40,7 @@ except ImportError:
 import traceback
 
 from simpleutil.config import cfg
+from simpleutil.posix import linux
 # :-:
 # from oslo_utils import encodeutils
 # from oslo_utils import importutils
@@ -417,3 +418,27 @@ def get_default_log_levels():
     setup.
     """
     return list(_options.DEFAULT_LOG_LEVELS)
+
+
+def set_filehandler_close_exec():
+    log_root = getLogger(None).logger
+    for handler in list(log_root.handlers):
+        if isinstance(handler, logging.StreamHandler):
+            linux.set_cloexec_flag(handler.stream.fileno())
+        elif isinstance(handler, logging.handlers.SysLogHandler):
+            linux.set_cloexec_flag(handler.socket.fileno())
+
+
+
+def set_syslog_handler_close_exec():
+    reopen = []
+    log_root = getLogger(None).logger
+    for handler in list(log_root.handlers):
+        if isinstance(handler, handlers.OSSysLogHandler):
+            # can not set exec
+            # close syslog
+            handler.close()
+            def _reopen():
+                handler.reopen()
+            reopen.append(_reopen)
+    return reopen

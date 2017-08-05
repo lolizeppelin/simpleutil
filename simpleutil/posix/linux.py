@@ -4,6 +4,7 @@ import sys
 import atexit
 import socket
 import contextlib
+import fcntl
 import pwd
 import grp
 import fcntl
@@ -23,6 +24,19 @@ DEVNULL = object()
 CONF = cfg.CONF
 
 LOG = logging.getLogger(__name__)
+
+
+def set_cloexec_flag(fd, cloexec=True):
+    try:
+        cloexec_flag = fcntl.FD_CLOEXEC
+    except AttributeError:
+        cloexec_flag = 1
+
+    old = fcntl.fcntl(fd, fcntl.F_GETFD)
+    if cloexec:
+        fcntl.fcntl(fd, fcntl.F_SETFD, old | cloexec_flag)
+    else:
+        fcntl.fcntl(fd, fcntl.F_SETFD, old & ~cloexec_flag)
 
 
 def setuid(user_id_or_name):

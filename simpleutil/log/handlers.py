@@ -48,14 +48,27 @@ if syslog is not None:
             # Do not use super() unless type(logging.Handler) is 'type'
             # (i.e. >= Python 2.7).
             logging.Handler.__init__(self)
-            binary_name = _get_binary_name()
-            syslog.openlog(binary_name, 0, facility)
+            self.binary_name = _get_binary_name()
+            self.facility = facility
+            syslog.openlog(self.binary_name, 0, self.facility)
+            self.closed = False
 
         def emit(self, record):
-            syslog.syslog(self.severity_map.get(record.levelname,
-                                                syslog.LOG_DEBUG),
-                          self.format(record))
+            if not self.closed:
+                syslog.syslog(self.severity_map.get(record.levelname,
+                                                    syslog.LOG_DEBUG),
+                              self.format(record))
 
+        def close(self):
+            if not self.closed:
+                syslog.closelog()
+                self.closed = True
+
+
+        def reopen(self):
+            if self.closed:
+                syslog.openlog(self.binary_name, 0, self.facility)
+                self.closed = False
 
 class ColorHandler(logging.StreamHandler):
     LEVEL_COLORS = {
