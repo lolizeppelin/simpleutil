@@ -4,8 +4,9 @@
 """
 Helper module for systemd service readiness notification.
 """
-import sys
+
 import platform
+from simpleutil import system
 
 def empty(*args, **kwargs):
     """do nothing"""
@@ -16,7 +17,7 @@ notify = empty
 onready = empty
 
 
-if (sys.platform != "win32"):
+if system.LINUX:
     from simpleutil.posix import linux
     sysname, verison, mark = platform.dist()
     if sysname.lower() in ('redhat', 'centos') and float(verison) >= 7.0:

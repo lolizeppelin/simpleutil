@@ -1,13 +1,13 @@
 # -*- coding: UTF-8 -*-
 import ctypes
 import os
-import platform
+from simpleutil import system
 
 
 def get_partion_free_bytes(folder):
     """ Return folder/drive free space (in bytes)
     """
-    if platform.system().lower() == 'windows':
+    if system.WINDOWS:
         free_bytes = ctypes.c_ulonglong(0)
         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None,
                                                    ctypes.pointer(free_bytes))

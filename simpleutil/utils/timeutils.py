@@ -20,10 +20,11 @@ import os
 import time
 import datetime
 import ntplib
-import sys
+# import sys
 import ctypes
 import ctypes.util
 
+from simpleutil import system
 from simpleutil.utils import reflection
 
 
@@ -37,7 +38,7 @@ _MAX_DATETIME_SEC = 59
 ntpclinet = ntplib.NTPClient()
 
 # copy from monotonic
-if os.name == 'nt':
+if system.WINDOWS:
     kernel32 = ctypes.windll.kernel32
     GetTickCount64 = getattr(kernel32, 'GetTickCount64', None)
     if GetTickCount64:
@@ -62,15 +63,20 @@ else:
         _fields_ = (('tv_sec', ctypes.c_long),
                     ('tv_nsec', ctypes.c_long))
 
-    if sys.platform.startswith('linux'):
+    # if sys.platform.startswith('linux'):
+    if system.LINUX:
         CLOCK_MONOTONIC = 1
-    elif sys.platform.startswith('freebsd'):
+    if system.FREEBSD:
+    # elif sys.platform.startswith('freebsd'):
         CLOCK_MONOTONIC = 4
-    elif sys.platform.startswith('sunos5'):
+    if system.SUNOS:
+    # elif sys.platform.startswith('sunos5'):
         CLOCK_MONOTONIC = 4
-    elif 'bsd' in sys.platform:
+    if system.BSD:
+    # elif 'bsd' in sys.platform:
         CLOCK_MONOTONIC = 3
-    elif sys.platform.startswith('aix'):
+    if system.AIX:
+    # elif sys.platform.startswith('aix'):
         CLOCK_MONOTONIC = ctypes.c_longlong(10)
 
     def monotonic():
