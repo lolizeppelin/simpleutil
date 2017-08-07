@@ -26,7 +26,6 @@ class Thread(object):
     """
     def __init__(self, thread, group):
         self.thread = thread
-        print 'wtf'
         self.thread.link(self.on_thread_done, group)
         # self.thread.link(_on_thread_done, group, self)
         self._ident = id(thread)
