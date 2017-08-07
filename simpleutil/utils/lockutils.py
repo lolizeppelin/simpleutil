@@ -153,7 +153,7 @@ class OrderedLock(DummyLock):
                         return
                     eventlet.sleep(0)
                 else:
-                    # TODO recheck this code
+                    # TODO recheck this code by gcy
                     self.acquire()
 
     def notify(self):
