@@ -20,6 +20,10 @@ Import related utilities and helper functions.
 import sys
 import traceback
 
+not_allow_name = ['manager', 'endpoint', 'agent', 'route',
+                  'managers', 'endpoints', 'agents', 'routes',
+                  ]
+
 
 def import_class(import_str):
     """Returns a class from a string including module and class.
@@ -27,6 +31,8 @@ def import_class(import_str):
     .. versionadded:: 0.3
     """
     mod_str, _sep, class_str = import_str.rpartition('.')
+    if class_str.lower() in not_allow_name:
+        raise ImportError('Class name %s is forbidden' % class_str)
     __import__(mod_str)
     try:
         return getattr(sys.modules[mod_str], class_str)
