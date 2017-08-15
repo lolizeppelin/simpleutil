@@ -5,7 +5,7 @@ from simpleutil.common.exceptions import InvalidArgument
 def map_to_int(ids):
         if isinstance(ids, basestring):
             ids_list = set(ids.split(','))
-        elif isinstance(ids, (list, set)):
+        elif isinstance(ids, (list, tuple, set)):
             ids_list = ids
         elif isinstance(ids, (int, long)):
             ids_list = [int(ids), ]
