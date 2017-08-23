@@ -46,6 +46,39 @@ else:
     get_signature = funcsigs.signature
 
 
+def get_callback_name(cb):
+    """Tries to get a callbacks fully-qualified name.
+
+    If no name can be produced ``repr(cb)`` is called and returned.
+    """
+    segments = []
+    try:
+        segments.append(cb.__qualname__)
+    except AttributeError:
+        try:
+            segments.append(cb.__name__)
+            if inspect.ismethod(cb):
+                try:
+                    # This attribute doesn't exist on py3.x or newer, so
+                    # we optionally ignore it... (on those versions of
+                    # python `__qualname__` should have been found anyway).
+                    segments.insert(0, cb.im_class.__name__)
+                except AttributeError:
+                    pass
+        except AttributeError:
+            pass
+    if not segments:
+        return repr(cb)
+    else:
+        try:
+            # When running under sphinx it appears this can be none?
+            if cb.__module__:
+                segments.insert(0, cb.__module__)
+        except AttributeError:
+            pass
+        return ".".join(segments)
+
+
 def get_members(obj, exclude_hidden=True):
     """Yields the members of an object, filtering by hidden/not hidden.
 
