@@ -101,10 +101,10 @@ class FiniteMachine(object):
         return cls.Effect(new_state['reactions'].get(event),
                           new_state["terminal"])
 
-    def __init__(self, default_start_state=None):
+    def __init__(self):
         self._transitions = {}
         self._states = collections.OrderedDict()
-        self._default_start_state = default_start_state
+        self._default_start_state = None
         self._current = None
         self.frozen = False
 
