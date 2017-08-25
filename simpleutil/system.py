@@ -13,3 +13,6 @@ NETBSD = sys.platform.startswith("netbsd")
 BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
 AIX = sys.platform.startswith('aix')
+
+# system encode
+SYSENCODE = sys.getfilesystemencoding()
