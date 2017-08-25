@@ -107,6 +107,7 @@ class FiniteMachine(object):
         self._default_start_state = None
         self._current = None
         self.frozen = False
+        self._shutoff = False
 
     @property
     def default_start_state(self):
@@ -305,6 +306,8 @@ class FiniteMachine(object):
                   callback to react to the new stable state.
         :rtype: namedtuple
         """
+        if self._shutoff:
+            return event, True
         self._pre_process_event(event)
         current = self._current
         replacement = self._transitions[current.name][event]
@@ -444,6 +447,11 @@ class FiniteMachine(object):
                     on_exit = empty
                 tbl.add_row([pretty_state, empty, empty, on_enter, on_exit])
         return tbl.get_string()
+
+    def shutoff(self):
+        self._shutoff = True
+        for stat in self._states:
+            stat['terminal'] = True
 
 
 class HierarchicalFiniteMachine(FiniteMachine):

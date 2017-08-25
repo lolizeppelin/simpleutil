@@ -34,8 +34,14 @@ class Runner(object):
     there should not be multiple runners using the same machine instance at
     the same time).
     """
-    def __init__(self, machine):
+    def __init__(self, machine, detail):
         self._machine = machine
+        self._detail = detail
+        self._shutoff = False
+
+    @property
+    def detail(self):
+        return self._detail
 
     @abc.abstractmethod
     def run(self, event, initialize=True):
@@ -60,11 +66,11 @@ class FiniteRunner(Runner):
     the same time).
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine, detail=True):
         """Create a runner for the given machine."""
         if not isinstance(machine, (machines.FiniteMachine,)):
             raise TypeError("FiniteRunner only works with FiniteMachine(s)")
-        super(FiniteRunner, self).__init__(machine)
+        super(FiniteRunner, self).__init__(machine, detail)
 
     def run(self, event, initialize=True):
         for transition in self.run_iter(event, initialize=initialize):
@@ -81,7 +87,7 @@ class FiniteRunner(Runner):
                 sent_event = yield (old_state, new_state)
             except GeneratorExit:
                 break
-            if terminal:
+            if terminal or self._shutoff:
                 break
             if reaction is None and sent_event is None:
                 raise excp.NotFound(_JUMPER_NOT_FOUND_TPL % (new_state,
@@ -91,7 +97,15 @@ class FiniteRunner(Runner):
                 event = sent_event
             else:
                 cb, args, kwargs = reaction
-                event = cb(old_state, new_state, event, *args, **kwargs)
+                if self._detail:
+                    event = cb(old_state, new_state, event, *args, **kwargs)
+                else:
+                    event = cb(*args, **kwargs)
+
+
+    def shutoff(self):
+        self._shutoff = True
+        self._machine.shutoff()
 
 
 class HierarchicalRunner(Runner):
@@ -102,12 +116,12 @@ class HierarchicalRunner(Runner):
     the same time).
     """
 
-    def __init__(self, machine):
+    def __init__(self, machine, detail=True):
         """Create a runner for the given machine."""
         if not isinstance(machine, (machines.HierarchicalFiniteMachine,)):
             raise TypeError("HierarchicalRunner only works with"
                             " HierarchicalFiniteMachine(s)")
-        super(HierarchicalRunner, self).__init__(machine)
+        super(HierarchicalRunner, self).__init__(machine, detail)
 
     def run(self, event, initialize=True):
         for transition in self.run_iter(event, initialize=initialize):
@@ -185,4 +199,7 @@ class HierarchicalRunner(Runner):
                 event = sent_event
             else:
                 cb, args, kwargs = effect.reaction
-                event = cb(old_state, new_state, event, *args, **kwargs)
+                if self._detail:
+                    event = cb(old_state, new_state, event, *args, **kwargs)
+                else:
+                    event = cb(*args, **kwargs)
