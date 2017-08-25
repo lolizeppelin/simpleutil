@@ -1,9 +1,9 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()"
 )}
 
-%define proj_name GLockRedis
+%define proj_name simpleutil
 
-Name:           glockredis
+Name:           simpleutil
 Version:        1.0.0
 Release:        0%{?dist}
 Summary:        python glock lock base by redis
