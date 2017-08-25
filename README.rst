@@ -5,6 +5,10 @@ simpleutil
 
 主要代码基于Openstack Mitaka中的oslo_cfg,oslo_log,oslo_util
 
+完整拷贝openstak状态机项目automaton减少相关依赖
+
+复制部分pyinotify代码减少相关依赖
+
 复制monotonic相关代码到timeutils中减少依赖
 
 复制python-cachetools代码到cachetools中减少依赖,默认计时器改为monotonic
