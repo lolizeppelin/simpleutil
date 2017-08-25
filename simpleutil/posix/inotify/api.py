@@ -87,8 +87,8 @@ class Notifier(object):
             event_queue.add(rawevent)
         return event_queue
 
-
     def loop(self, callable):
+        watch_list = [self._fd, ]
         empty_w_list = []
         empty_e_list = []
         while True:
@@ -96,7 +96,7 @@ class Notifier(object):
                 break
             try:
                 # select is eventlet.green.select
-                rlist, wlist, errlist = select.select([self._fd, ], empty_w_list, empty_e_list)
+                rlist, wlist, errlist = select.select(watch_list, empty_w_list, empty_e_list)
             except (OSError, IOError):
                 continue
             else:
