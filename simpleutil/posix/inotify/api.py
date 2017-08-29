@@ -53,6 +53,7 @@ class Notifier(object):
         else:
             self.del_watch()
             os.close(self._fd)
+            self._fd = None
 
     def read_events(self):
         """
