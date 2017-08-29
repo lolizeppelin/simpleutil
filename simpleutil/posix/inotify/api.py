@@ -29,6 +29,8 @@ def format_path(path):
 
 class Notifier(object):
 
+    interval = 1.0
+
     def __init__(self, path, threshold=0):
 
         if not os.path.isfile(path):
@@ -96,7 +98,8 @@ class Notifier(object):
                 break
             try:
                 # select is eventlet.green.select
-                rlist, wlist, errlist = select.select(watch_list, empty_w_list, empty_e_list)
+                rlist, wlist, errlist = select.select(watch_list, empty_w_list, empty_e_list,
+                                                      timeout=self.interval)
             except (OSError, IOError):
                 continue
             else:
