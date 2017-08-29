@@ -69,7 +69,7 @@ class Notifier(object):
 
         r = os.read(self._fd, queue_size)
         LOG.debug('Event queue size: %d', queue_size)
-        event_queue = set()
+        event_queue = []
         rsum = 0  # counter
         while rsum < queue_size:
             s_size = 16
@@ -84,7 +84,7 @@ class Notifier(object):
             if mask & event.IN_IGNORED:
                 continue
             rawevent = dict(wd=wd, mask=mask, cookie=cookie, fname=fname)
-            event_queue.add(rawevent)
+            event_queue.append(rawevent)
         return event_queue
 
     def loop(self, callable):
