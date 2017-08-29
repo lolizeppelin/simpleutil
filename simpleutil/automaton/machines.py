@@ -451,7 +451,7 @@ class FiniteMachine(object):
     def shutoff(self):
         self._shutoff = True
         for stat in self._states:
-            stat['terminal'] = True
+            self._states[stat]['terminal'] = True
 
 
 class HierarchicalFiniteMachine(FiniteMachine):
@@ -461,9 +461,8 @@ class HierarchicalFiniteMachine(FiniteMachine):
     Effect = collections.namedtuple('Effect',
                                     'reaction,terminal,machine')
 
-    def __init__(self, default_start_state=None):
-        super(HierarchicalFiniteMachine, self).__init__(
-            default_start_state=default_start_state)
+    def __init__(self):
+        super(HierarchicalFiniteMachine, self).__init__()
         self._nested_machines = {}
 
     @classmethod
