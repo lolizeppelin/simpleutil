@@ -4,10 +4,10 @@ import heapq
 import contextlib
 
 import weakref
-import threading
+# import threading
 import eventlet
 import eventlet.hubs
-import eventlet.semaphore
+from eventlet.semaphore import Semaphore
 
 from simpleutil.utils.timeutils import monotonic
 
@@ -185,7 +185,7 @@ class Semaphores(object):
 
     def __init__(self):
         self._semaphores = weakref.WeakValueDictionary()
-        self._lock = threading.Lock()
+        self._lock = Semaphore(1)
 
     def get(self, name):
         """Gets (or creates) a semaphore with a given name.
@@ -200,7 +200,7 @@ class Semaphores(object):
             try:
                 return self._semaphores[name]
             except KeyError:
-                sem = threading.Semaphore()
+                sem = Semaphore(1)
                 self._semaphores[name] = sem
                 return sem
 
