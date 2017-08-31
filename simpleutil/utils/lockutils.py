@@ -70,6 +70,8 @@ class PriorityLock(DummyLock):
     """
     def __init__(self):
         self.locked = False
+        # will need heapq.heappop this list
+        # so we will not chose collections.deque
         self._waiters = []
         self.default_priority = 0
 
