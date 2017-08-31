@@ -205,7 +205,9 @@ class ReaderWriterLock(object):
 
     def __init__(self):
         self._readers = {}
+        # list pop last as faster as deque
         self._writers = []
+        # list remove faster than deque
         self._pending_writers = []
         # waiter hub switch list
         self._waiters = collections.deque()
