@@ -13,19 +13,8 @@ from eventlet.semaphore import Semaphore
 hub = eventlet.hubs.get_hub()
 
 
-def avoid_making_same_scheduled_time():
-    """Default eventlet.hubs use time.time() as order key
-    time.time() can not guarantee the accuracy of time
-    If schedule_call_global too fast
-    That will lead to an order error
-    So call eventlet.sleep(0) to avoid
-    """
-    s = time.time()
-    while time.time() == s:
-        eventlet.sleep(0)
-
-
 class DummyLock(object):
+
     def acquire(self):
         pass
 
@@ -34,20 +23,64 @@ class DummyLock(object):
 
     def __enter__(self):
         self.acquire()
+        return self
 
     def __exit__(self, type, value, traceback):
         self.release()
 
-    def set_defalut_priority(self, priority):
-        pass
 
-    @contextlib.contextmanager
-    def priority(self, priority):
-        self.acquire()
-        try:
-            yield
-        finally:
-            self.release()
+class RLock(DummyLock):
+    """A reentrant lock must be released by the thread that acquired it. Once a
+       thread has acquired a reentrant lock, the same thread may acquire it
+       again without blocking; the thread must release it once for each time it
+       has acquired it.
+    """
+
+    def __init__(self, verbose=None):
+        self.__block = Semaphore(1)
+        self.__owner = None
+        self.__count = 0
+
+    def __repr__(self):
+        owner = self.__owner
+        return "<%s owner=%r count=%d>" % (
+                self.__class__.__name__, owner, self.__count)
+
+    def acquire(self, blocking=1):
+        me = eventlet.getcurrent()
+        if self.__owner == me:
+            self.__count = self.__count + 1
+            return 1
+        rc = self.__block.acquire(blocking)
+        if rc:
+            self.__owner = me
+            self.__count = 1
+        return rc
+
+    def release(self):
+        if self.__owner != eventlet.getcurrent():
+            raise RuntimeError("cannot release un-acquired lock")
+        self.__count = count = self.__count - 1
+        if not count:
+            self.__owner = None
+            self.__block.release()
+
+    def _acquire_restore(self, count_owner):
+        count, owner = count_owner
+        self.__block.acquire()
+        self.__count = count
+        self.__owner = owner
+
+    def _release_save(self):
+        count = self.__count
+        self.__count = 0
+        owner = self.__owner
+        self.__owner = None
+        self.__block.release()
+        return (count, owner)
+
+    def _is_owned(self):
+        return self.__owner == eventlet.getcurrent()
 
 
 class PriorityGreenlet(object):
@@ -308,6 +341,18 @@ class ReaderWriterLock(object):
     def notify_all(self):
         while self._waiters:
             self.notify()
+
+
+def avoid_making_same_scheduled_time():
+    """Default eventlet.hubs use time.time() as order key
+    time.time() can not guarantee the accuracy of time
+    If schedule_call_global too fast
+    That will lead to an order error
+    So call eventlet.sleep(0) to avoid
+    """
+    s = time.time()
+    while time.time() == s:
+        eventlet.sleep(0)
 
 
 def read_locked(*args, **kwargs):
