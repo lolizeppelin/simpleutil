@@ -3,6 +3,7 @@ import time
 import heapq
 import six
 import contextlib
+import collections
 
 import weakref
 import eventlet
@@ -95,13 +96,13 @@ class PriorityLock(DummyLock):
     def acquire_with_priority(self, priority):
         """Implement of alloc lock"""
         current_thread = eventlet.getcurrent()
-        for _waiters in self._waiters:
+        for waiter in self._waiters:
             # 避免当前线程再锁
-            if current_thread is _waiters.greenlet:
+            if current_thread is waiter.greenlet:
                 return
         if self.locked:
-            locker = PriorityGreenlet(priority, current_thread)
-            heapq.heappush(self._waiters, locker)
+            waiter = PriorityGreenlet(priority, current_thread)
+            heapq.heappush(self._waiters, waiter)
             hub.switch()
         self.locked = True
 
@@ -195,22 +196,22 @@ class ReaderWriterLock(object):
     This can be eventually removed if http://bugs.python.org/issue8800 ever
     gets accepted into the python standard threading library...
     """
-
     #: Writer owner type/string constant.
     WRITER = 'w'
-
     #: Reader owner type/string constant.
     READER = 'r'
 
     def __init__(self):
-        self._writer = None
-        self._pendings = []
         self._readers = {}
+        self._writers = []
+        self._pending_writers = []
+        # waiter hub switch list
+        self._waiters = collections.deque()
 
     @property
     def owner(self):
         """Returns whether the lock is locked by a writer or reader."""
-        if self._writer is not None:
+        if self._writers:
             return self.WRITER
         if self._readers:
             return self.READER
@@ -226,17 +227,23 @@ class ReaderWriterLock(object):
         a read lock.
         """
         me = eventlet.getcurrent()
-        i_am_writer = (self._writer == me)
-        if self._writer is None or i_am_writer:
-            try:
-                self._readers[me] = self._readers[me] + 1
-            except KeyError:
-                self._readers[me] = 1
-        else:
-            if self._pendings:
-                last = self._pendings.pop(0)
-                self._pendings.append(me)
-                last.switch()
+        if me in self._pending_writers:
+            raise RuntimeError("Writer %s can not acquire a read lock"
+                               " while waiting for the write lock"
+                               % me)
+
+        while True:
+            if not self._writers or (me in self._writers):
+                try:
+                    self._readers[me] = self._readers[me] + 1
+                except KeyError:
+                    self._readers[me] = 1
+                break
+            else:
+                if self._waiters:
+                    last = self._waiters.popleft()
+                    self._waiters.append(me)
+                    last.switch()
         try:
             yield self
         finally:
@@ -260,38 +267,42 @@ class ReaderWriterLock(object):
         a lock.
         """
         me = eventlet.getcurrent()
-        i_am_writer = (self._writer == me)
-        i_am_reader = (me in self._readers)
-        if i_am_reader and not i_am_writer:
-            raise RuntimeError("Reader %s to writer privilege"
-                               " escalation not allowed" % me)
-        if i_am_writer:
+        if me in self._writers:
             # Already the writer; this allows for basic reentrancy.
-            yield self
+            self._writers.append(me)
         else:
-            if len(self._readers) == 0 and self._writer is None:
-                self._writer = me
-            else:
-                if self._pendings:
-                    last = self._pendings.pop(0)
-                    self._pendings.append(me)
-                    last.switch()
-            try:
-                yield self
-            finally:
-                self._writer = None
-                self.notify()
+            if me in self._readers:
+                raise RuntimeError("Reader %s to writer privilege "
+                                   "escalation not allowed" % me)
+            while True:
+                if not self._writers and not self._readers:
+                    self._writers.append(me)
+                    break
+                else:
+                    if self._waiters:
+                        last = self._waiters.popleft()
+                        self._waiters.append(me)
+                        # i am a pending_writer
+                        self._pending_writers.append(me)
+                        last.switch()
+                        # i am not pending now
+                        self._pending_writers.remove(me)
+        try:
+            yield self
+        finally:
+            self._writers.pop()
+            self.notify()
 
     def notify(self):
-        me = eventlet.getcurrent()
-        if self._pendings:
-            last = self._pendings.pop(0)
+        if self._waiters:
+            me = eventlet.getcurrent()
+            last = self._waiters.popleft()
             if last is not me:
                 hub.schedule_call_global(0, last.switch)
                 avoid_making_same_scheduled_time()
 
     def notify_all(self):
-        while self._pendings:
+        while self._waiters:
             self.notify()
 
 
