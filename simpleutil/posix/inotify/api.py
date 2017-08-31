@@ -4,6 +4,7 @@ import struct
 import fcntl
 import termios
 import select
+import collections
 
 from simpleutil.log import log as logging
 from simpleutil import system
@@ -72,7 +73,7 @@ class Notifier(object):
 
         r = os.read(self._fd, queue_size)
         LOG.debug('Event queue size: %d', queue_size)
-        event_queue = []
+        event_queue = collections.deque()
         rsum = 0  # counter
         while rsum < queue_size:
             s_size = 16
