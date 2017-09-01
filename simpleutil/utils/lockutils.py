@@ -463,3 +463,19 @@ def stlocked(*args, **kwargs):
             return decorator(args[0])
         else:
             return decorator
+
+
+@contextlib.contextmanager
+def try_lock(lock):
+    """Attempts to acquire a lock, and auto releases if acquired (on exit)."""
+    # NOTE(harlowja): the keyword argument for 'blocking' does not work
+    # in py2.x and only is fixed in py3.x (this adjustment is documented
+    # and/or debated in http://bugs.python.org/issue10789); so we'll just
+    # stick to the format that works in both (oddly the keyword argument
+    # works in py2.x but only with reentrant locks).
+    was_locked = lock.acquire(False)
+    try:
+        yield was_locked
+    finally:
+        if was_locked:
+            lock.release()
