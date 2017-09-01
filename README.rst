@@ -17,6 +17,10 @@ simpleutil
 
 在lockutils中通过eventlet实现一个优先级锁PriorityLock,作用参考oslo_messaging._drivers.impl_rabbit中的ConnectionLock
 
+在lockutils中复制了fasteners的读写锁,修改对应代码取消对threading的依赖
+
+在实现了一个简单的futurist模块用于取代的futurist的库,代码量少功能简单只支持eventlet
+
 在uuidutils中实现了一个全局主键生成器Gprimarykey,原理类似Snowflake
 
 在timutils中通过monotonic实现一个用于获取等同于time.time()值但不受系统时间变更影响的函数
