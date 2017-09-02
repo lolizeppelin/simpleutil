@@ -49,6 +49,13 @@ class Thread(object):
     def link(self, func, *args, **kwargs):
         self.thread.link(func, *args, **kwargs)
 
+    def unlink(self, func, *args, **kwargs):
+        self.thread.unlink(func, *args, **kwargs)
+
+    @property
+    def dead(self):
+        return self.thread.dead
+
 
 class ThreadGroup(object):
     """The point of the ThreadGroup class is to:
