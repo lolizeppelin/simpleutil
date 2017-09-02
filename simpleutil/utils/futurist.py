@@ -41,13 +41,14 @@ class Future(object):
             return self._result
         else:
             me = eventlet.getcurrent()
-            # back when thread finish
+            # switch back when thread finished
             self._thread.link(me.switch)
-            # back when timeout
-            timer = eventlet.spawn_after(timeout, me.switch)
+            # switch back when timeout
+            timer = hub.schedule_call_global(timeout, me.switch)
             # swith to main hub
-            hub.switch()
-            timer.cancel()
+            # switch back by thread done, cancel timer
+            if hub.switch():
+                timer.cancel()
             return self._result
 
     def cancel(self):
@@ -89,3 +90,17 @@ class GreenThreadPoolExecutor(object):
         with self._shutdown_lock:
             if not self._shutdown:
                 self._pool.stop(graceful=wait)
+
+
+class SynchronousExecutor(GreenThreadPoolExecutor):
+
+    def __init__(self):
+        super(SynchronousExecutor, self).__init__(max_workers=1)
+
+    def _submit(self, fn, *args, **kwargs):
+        func = functools.partial(fn, *args, **kwargs)
+        fut = Future(func)
+        thread = self._pool.add_thread(fut)
+        fut.link(thread)
+        thread.wait()
+        return fut
