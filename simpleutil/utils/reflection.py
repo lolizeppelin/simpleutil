@@ -443,3 +443,10 @@ class removed_property(object):
         o.removal_version = self.removal_version
         o.category = self.category
         return o
+
+
+def accepts_kwargs(function):
+    """Returns ``True`` if function accepts kwargs otherwise ``False``."""
+    sig = get_signature(function)
+    return any(p.kind == Parameter.VAR_KEYWORD
+               for p in six.itervalues(sig.parameters))
