@@ -35,8 +35,6 @@ def _encode_list(json_list, encoding):
             item = _encode_list(item, encoding)
         elif isinstance(item, dict):
             item = _encode_dict(item, encoding)
-        else:
-            raise TypeError("%s can't be encoded" % type(item))
         rv.append(item)
     return rv
 
