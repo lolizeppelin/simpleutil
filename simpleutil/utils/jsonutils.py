@@ -54,8 +54,6 @@ def _encode_dict(json_dict, encoding):
             value = _encode_list(value, encoding)
         elif isinstance(value, dict):
             value = _encode_dict(value, encoding)
-        else:
-            raise TypeError("%s can't be encoded" % type(key))
         rv[key] = value
     return rv
 
