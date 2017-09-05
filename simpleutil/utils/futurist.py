@@ -44,6 +44,7 @@ class Future(object):
         else:
             me = eventlet.getcurrent()
             # switch back when thread finished
+            success_callback = me.switch
             self._thread.link(me.switch)
             # switch back when timeout
             timer = hub.schedule_call_global(timeout, me.switch)
@@ -52,7 +53,8 @@ class Future(object):
             if hub.switch():
                 timer.cancel()
             else:
-                self._thread.unlink(me.switch)
+                # call back by timeout timer
+                self._thread.unlink(success_callback)
             return self._result
 
     def cancel(self):
@@ -109,10 +111,10 @@ class SynchronousExecutor(GreenThreadPoolExecutor):
 
 
 def if_future_done(future):
+    # future._thread.dead
     return future._result is not NOT_FINISH or \
            future.canceled or \
            future._thread is None
-           # future._thread.dead
 
 
 def future_wait(futures, timeout, ok_count=1):
@@ -128,8 +130,9 @@ def future_wait(futures, timeout, ok_count=1):
     if len(done) >= ok_count:
         return done, not_done
     me = eventlet.getcurrent()
+    success_callback = me.switch
     for future in not_done:
-        future._thread.link(me.switch)
+        future._thread.link(success_callback)
     timer = hub.schedule_call_global(timeout, me.switch)
     count = len(done)
     while True:
@@ -148,7 +151,8 @@ def future_wait(futures, timeout, ok_count=1):
             done.add(future)
             tmp.add(future)
         else:
-            if not future._thread.unlink(me.switch):
+            # still not done!
+            if not future._thread.unlink(success_callback):
                 raise RuntimeError('unlink switch function')
     not_done = not_done - tmp
     return done, not_done
