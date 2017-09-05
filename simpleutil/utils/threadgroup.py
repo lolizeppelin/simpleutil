@@ -50,7 +50,16 @@ class Thread(object):
         self.thread.link(func, *args, **kwargs)
 
     def unlink(self, func, *args, **kwargs):
-        self.thread.unlink(func, *args, **kwargs)
+        # fix buf of unlink
+        target = None
+        for funcs in getattr(self.thread, '_exit_funcs', []):
+            if funcs[0] is func and funcs[1] == args and funcs[2] == kwargs:
+                target = funcs
+                break
+        if target:
+            self.thread._exit_funcs.remove(target)
+            return True
+        return False
 
     @property
     def dead(self):
