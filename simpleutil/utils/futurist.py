@@ -1,6 +1,8 @@
 import eventlet
 import eventlet.hubs
+from eventlet.support.greenlets import GreenletExit
 import functools
+from collections import Iterable
 
 from eventlet.semaphore import Semaphore
 from simpleutil.utils import threadgroup
@@ -9,9 +11,16 @@ NOT_FINISH = object()
 
 hub = eventlet.hubs.get_hub()
 
+class Error(Exception):
+    """Base class for all future-related exceptions."""
+    pass
 
-class CancelledError(Exception):
+class CancelledError(Error):
     """"""
+
+class TimeoutError(Error):
+    """The operation exceeded the given deadline."""
+    pass
 
 
 class Future(object):
@@ -39,29 +48,42 @@ class Future(object):
         if self._result is not NOT_FINISH:
             return self._result
         if timeout is None:
-            self._thread.wait()
+            try:
+                self._thread.wait()
+            except GreenletExit:
+                if self.canceled:
+                    raise CancelledError('Future has been canceled')
             return self._result
         else:
+            _finish = object()
+            _timeout = object()
             me = eventlet.getcurrent()
             # switch back when thread finished
-            success_callback = me.switch
-            self._thread.link(me.switch)
+            callback = me.switch
+            self._thread.link(callback, _finish)
             # switch back when timeout
-            timer = hub.schedule_call_global(timeout, me.switch)
+            timer = hub.schedule_call_global(timeout, callback, _timeout)
             # swith to main hub
             # switch back by thread done, cancel timer
-            if hub.switch():
-                timer.cancel()
-            else:
+            ret = hub.switch()
+            if ret is _timeout:
                 # call back by timeout timer
-                self._thread.unlink(success_callback)
+                if not self._thread.unlink(callback, _finish):
+                    raise RuntimeError('Remove switch back fail')
+                raise TimeoutError('Future fetch result timeout')
+            elif isinstance(ret, Iterable) and _finish in ret:
+                timer.cancel()
+                if self.canceled:
+                    raise CancelledError('Future canceled')
+            else:
+                raise RuntimeError('Unexcept switch back')
             return self._result
 
     def cancel(self):
         if self._result is not NOT_FINISH:
             raise RuntimeError('Work has been finished')
-        self._thread.stop()
         self.canceled = True
+        self._thread.stop()
 
 
 class GreenThreadPoolExecutor(object):
@@ -129,22 +151,27 @@ def future_wait(futures, timeout, ok_count=1):
             not_done.add(future)
     if len(done) >= ok_count:
         return done, not_done
+    _finish = object()
+    _timeout = object()
     me = eventlet.getcurrent()
-    success_callback = me.switch
+    callback = me.switch
     for future in not_done:
-        future._thread.link(success_callback)
-    timer = hub.schedule_call_global(timeout, me.switch)
+        future._thread.link(callback, _finish)
+    timer = hub.schedule_call_global(timeout, callback, _timeout)
     count = len(done)
     while True:
-        if hub.switch():
+        ret = hub.switch()
+        if ret is _timeout:
+            # swith by timeout
+            break
+        elif isinstance(ret, Iterable) and _finish in ret:
             count += 1
             # all success
             if count == ok_count:
                 timer.cancel()
                 break
         else:
-            # swith by timeout
-            break
+            raise RuntimeError('Unexcept switch back')
     tmp = set()
     for future in not_done:
         if if_future_done(future):
@@ -152,7 +179,7 @@ def future_wait(futures, timeout, ok_count=1):
             tmp.add(future)
         else:
             # still not done!
-            if not future._thread.unlink(success_callback):
+            if not future._thread.unlink(callback, _finish):
                 raise RuntimeError('unlink switch function')
     not_done = not_done - tmp
     return done, not_done
