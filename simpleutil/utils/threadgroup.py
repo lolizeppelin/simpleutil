@@ -53,7 +53,7 @@ class Thread(object):
         # fix buf of unlink
         target = None
         for funcs in getattr(self.thread, '_exit_funcs', []):
-            if funcs[0] is func and funcs[1] == args and funcs[2] == kwargs:
+            if funcs[0] == func and funcs[1] == args and funcs[2] == kwargs:
                 target = funcs
                 break
         if target:
