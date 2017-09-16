@@ -53,6 +53,7 @@ class Future(object):
             except GreenletExit:
                 if self.canceled:
                     raise CancelledError('Future has been canceled')
+                raise RuntimeError('Future unexcept switch back')
             return self._result
         else:
             _finish = object()
@@ -75,9 +76,9 @@ class Future(object):
                 timer.cancel()
                 if self.canceled:
                     raise CancelledError('Future canceled')
+                return self._result
             else:
                 raise RuntimeError('Unexcept switch back')
-            return self._result
 
     def cancel(self):
         if self._result is not NOT_FINISH:
@@ -171,7 +172,7 @@ def future_wait(futures, timeout, ok_count=1):
                 timer.cancel()
                 break
         else:
-            raise RuntimeError('Unexcept switch back')
+            raise RuntimeError('Wait future unexcept switch back')
     tmp = set()
     for future in not_done:
         if if_future_done(future):
