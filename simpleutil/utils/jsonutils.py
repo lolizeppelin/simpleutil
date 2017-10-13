@@ -236,7 +236,7 @@ if not hasattr(_format, 'is_datetime'):
                 return True
             return strict_rfc3339.validate_rfc3339(instance)
 
-    for _draft_name, _draft in six.itervalues(_format._draft_checkers):
+    for _draft_name, _draft in six.iteritems(_format._draft_checkers):
         if 'date-time' not in _draft:
             _format._draft_checkers[_draft_name].append('date-time')
         func = _format.FormatChecker.cls_checks('date-time', (ValueError, ))(is_datetime)
