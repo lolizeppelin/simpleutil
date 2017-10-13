@@ -19,7 +19,10 @@ setup(
     # kombu>=3.0.25否则timeout参数有问题
     install_requires=('netaddr>=0.7.5', 'eventlet>=0.15.2', 'six>=1.9.0',
                       'funcsigs>=0.4', # python3 do not need it
-                      'ntplib>=0.3.3'),
+                      'ntplib>=0.3.3',
+                      'jsonschema>=2.0.0',
+                      'jsonschema<3.0.0',
+                      'jsonschema!=2.5.0',),
     name='simpleutil',
     version=__version__,
     description='a simple copy of some utils from openstack',

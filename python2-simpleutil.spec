@@ -23,6 +23,9 @@ Requires:       python-eventlet >= 0.15.2
 Requires:       python-six >= 1.9.0
 Requires:       python-funcsigs >= 0.4
 Requires:       python-ntplib >= 0.3.3
+Requires:       python-jsonschema >=2.0.0
+Requires:       python-jsonschema != 2.5.0
+Requires:       python-jsonschema <3.0.0
 
 
 %description

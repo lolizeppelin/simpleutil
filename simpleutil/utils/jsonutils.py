@@ -6,8 +6,13 @@ import json
 import uuid
 import codecs
 
-import netaddr
 import six
+import netaddr
+import jsonschema
+from jsonschema import exceptions as schema_exc
+from jsonschema import _format
+
+
 try:
     import six.moves.xmlrpc_client as xmlrpclib
 except:
@@ -15,6 +20,17 @@ except:
 
 from simpleutil.utils import encodeutils
 from simpleutil.utils.timeutils import PERFECT_TIME_FORMAT
+
+
+# Special jsonschema validation types/adjustments.
+_SCHEMA_TYPES = {
+    # See: https://github.com/Julian/jsonschema/issues/148
+    'array': (list, tuple),
+}
+
+# Expose these types so that people don't have to import the same exceptions.
+ValidationError = schema_exc.ValidationError
+SchemaError = schema_exc.SchemaError
 
 _simple_types = (six.string_types + six.integer_types + (type(None), bool, float))
 _nasty_type_tests = [inspect.ismodule, inspect.isclass, inspect.ismethod,
@@ -196,3 +212,37 @@ def load(fp, encoding='utf-8', **kwargs):
     :returns: python object
     """
     return json.load(codecs.getreader(encoding)(fp), **kwargs)
+
+# add formater date-time for jsonschema 2.4
+if not hasattr(_format, 'is_datetime'):
+    try:
+        import strict_rfc3339
+    except ImportError:
+        try:
+            import isodate
+        except ImportError:
+            def is_datetime(instance):
+                if not isinstance(instance, six.string_types):
+                    return True
+                return datetime.datetime.strptime(instance, "%Y-%m-%d %H:%M:%S")
+        else:
+            def is_datetime(instance):
+                if not isinstance(instance, six.string_types):
+                    return True
+                return isodate.parse_datetime(instance)
+    else:
+        def is_datetime(instance):
+            if not isinstance(instance, six.string_types):
+                return True
+            return strict_rfc3339.validate_rfc3339(instance)
+
+    for _draft_name, _draft in six.itervalues(_format._draft_checkers):
+        if 'date-time' not in _draft:
+            _format._draft_checkers[_draft_name].append('date-time')
+        func = _format.FormatChecker.cls_checks('date-time', (ValueError, ))(is_datetime)
+        setattr(_format, 'is_datetime', func)
+
+
+def schema_validate(data, schema):
+    """Validates given data using provided json schema."""
+    jsonschema.validate(data, schema, types=_SCHEMA_TYPES)
