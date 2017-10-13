@@ -41,8 +41,6 @@ _nasty_type_tests = [inspect.ismodule, inspect.isclass, inspect.ismethod,
 
 MAX_DEEP = 5
 
-DEBUG = False
-
 
 def _encode_list(json_list, encoding):
     rv = []
@@ -244,13 +242,9 @@ if not hasattr(_format, 'is_datetime'):
         func = _format.FormatChecker.cls_checks('date-time', (ValueError, ))(is_datetime)
         setattr(_format, 'is_datetime', func)
 
+FormatChecker = jsonschema.FormatChecker()
 
-def schema_validate(data, schema):
+def schema_validate(data, schema, checker=None):
     """Validates given data using provided json schema."""
-    try:
-        jsonschema.validate(data, schema, types=_SCHEMA_TYPES)
-        return True
-    except (ValidationError, SchemaError):
-        if DEBUG:
-            raise
-        return False
+    jsonschema.validate(data, schema, types=_SCHEMA_TYPES,
+                        format_checker=checker or FormatChecker)
