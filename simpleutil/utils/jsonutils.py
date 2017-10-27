@@ -245,11 +245,17 @@ if not hasattr(_format, 'is_datetime'):
         setattr(_format, 'is_datetime', func)
 
 # add formater uuid  md5 crc32
-MD5LIKE = re.compile('^[a-z0-9]{32}$')
+MD5LIKE = re.compile('^[a-f0-9]{32}$')
 CRC32LIKE = re.compile('^[a-z0-9]{8,33}$')
 
 def is_md5_like(var):
-    return re.match(MD5LIKE, var) is not None
+    if re.match(MD5LIKE, var):
+        try:
+            int(var, 16)
+        except ValueError:
+            return False
+        return True
+    return False
 
 def is_crc32_like(var):
     return re.match(CRC32LIKE, var) is not None
