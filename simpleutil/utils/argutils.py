@@ -2,22 +2,24 @@
 from simpleutil.common.exceptions import InvalidArgument
 
 
+def map_with(ids, func):
+    if isinstance(ids, basestring):
+        ids_list = ids.split(',')
+    elif not isinstance(ids, (list, tuple, set, frozenset)):
+        ids_list = [ids, ]
+    else:
+        raise InvalidArgument('id can not be formated from %s' % ids.__class__.__name__)
+    try:
+        ids_set = set(map(func, ids_list))
+    except (TypeError, ValueError) as e:
+        raise InvalidArgument('id can not be formated: %(class)s' % e.__class__.__name__)
+    if len(ids_set) < 1:
+        raise InvalidArgument('Input list is empty')
+    return ids_set
+
+
 def map_to_int(ids):
-        if isinstance(ids, basestring):
-            ids_list = set(ids.split(','))
-        elif isinstance(ids, (list, tuple, set)):
-            ids_list = ids
-        elif isinstance(ids, (int, long)):
-            ids_list = [int(ids), ]
-        else:
-            raise InvalidArgument('id can not be formated from %s' % ids.__class__.__name__)
-        try:
-            ids_set = set(map(int, ids_list))
-        except (TypeError, ValueError) as e:
-            raise InvalidArgument('id can not be formated: %(class)s' % e.__class__.__name__)
-        if len(ids_set) < 1:
-            raise InvalidArgument('No entity found for id')
-        return ids_set
+    return map_with(ids, int)
 
 
 class Idformater(object):
