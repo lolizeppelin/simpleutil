@@ -626,7 +626,7 @@ class PortRange(ConfigType):
         super(PortRange, self).__init__(type_name=type_name)
 
     def __call__(self, value):
-        return validators['type:ports_range'](value)
+        return validators['type:ports_range_list'](value)
 
 
 class FolderPath(ConfigType):
