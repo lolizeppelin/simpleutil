@@ -238,7 +238,7 @@ def _validate_ports_range(value):
 def _validate_ports_range_list(value):
     if isinstance(value, (int, long, basestring)):
         return [_validate_ports_range(value), ]
-    if isinstance(value, (list, tuple, set)):
+    if isinstance(value, (list, tuple, set, frozenset)):
         ports_range_list = []
         for port_range in value:
             ports_range_list.append(_validate_ports_range(port_range))
