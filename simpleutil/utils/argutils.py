@@ -5,7 +5,9 @@ from simpleutil.common.exceptions import InvalidArgument
 def map_with(ids, func):
     if isinstance(ids, basestring):
         ids_list = ids.split(',')
-    elif not isinstance(ids, (list, tuple, set, frozenset)):
+    elif isinstance(ids, (list, tuple, set, frozenset)):
+        ids_list = ids
+    elif isinstance(ids, (int, long)):
         ids_list = [ids, ]
     else:
         raise InvalidArgument('id can not be formated from %s' % ids.__class__.__name__)
