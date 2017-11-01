@@ -119,7 +119,7 @@ log_opts = [
                help='Format string to use for log messages when context is '
                     'undefined.'),
     cfg.StrOpt('logging_debug_format_suffix',
-               default='%(funcName)s %(pathname)s:%(lineno)d',
+               # default='%(funcName)s %(pathname)s:%(lineno)d',
                help='Additional data to append to log message when logging '
                     'level for the message is DEBUG.'),
     cfg.StrOpt('logging_exception_prefix',
