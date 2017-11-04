@@ -27,7 +27,7 @@ from simpleutil.utils.uuidutils import is_uuid_like
 # Special jsonschema validation types/adjustments.
 _SCHEMA_TYPES = {
     # See: https://github.com/Julian/jsonschema/issues/148
-    'array': (list, tuple),
+    'array': (list, tuple, set, frozenset),
 }
 
 # Expose these types so that people don't have to import the same exceptions.
