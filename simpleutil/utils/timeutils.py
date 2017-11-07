@@ -67,16 +67,12 @@ else:
     if system.LINUX:
         CLOCK_MONOTONIC = 1
     if system.FREEBSD:
-    # elif sys.platform.startswith('freebsd'):
         CLOCK_MONOTONIC = 4
     if system.SUNOS:
-    # elif sys.platform.startswith('sunos5'):
         CLOCK_MONOTONIC = 4
     if system.BSD:
-    # elif 'bsd' in sys.platform:
         CLOCK_MONOTONIC = 3
     if system.AIX:
-    # elif sys.platform.startswith('aix'):
         CLOCK_MONOTONIC = ctypes.c_longlong(10)
 
     def monotonic():
@@ -90,7 +86,24 @@ else:
 if monotonic() - monotonic() > 0:
     raise ValueError('monotonic() is not monotonic!')
 
+
+class RealNow(object):
+
+    def __init__(self):
+        self.__diff = time.time() - monotonic()
+
+    def update_diff(self, diff):
+        self.__diff = diff
+
+    def __call__(self):
+        if self.__diff is None:
+            return time.time()
+        return monotonic() + self.__diff
+
+
+realnow = RealNow()
 now = monotonic
+
 
 def utcnow(t=None):
     if not t:
@@ -281,23 +294,6 @@ class StopWatch(object):
         self._stopped_at = monotonic()
         self._state = self._STOPPED
         return self
-
-
-class RealNow(object):
-
-    def __init__(self,
-                 diff=time.time() - monotonic(),
-                 ):
-        self.__diff = diff
-
-    def update_diff(self, diff):
-        self.__diff = diff
-
-    def __call__(self):
-        return monotonic() + self.__diff
-
-
-realnow = RealNow()
 
 
 def ntptime(host, version=2, port=123, timeout=5):
