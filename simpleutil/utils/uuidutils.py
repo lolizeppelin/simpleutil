@@ -1,7 +1,7 @@
 import time
 import uuid
 
-from simpleutil.utils.timeutils import monotonic
+from simpleutil.utils.timeutils import realnow
 
 def generate_uuid():
     """Creates a random uuid string.
@@ -42,12 +42,9 @@ class Gprimarykey(object):
     53-61   pid       max 255      8   bit
     61-64   sequence  max 7        3   bit
     """
-    def __init__(self,
-                 difftime=int(time.time()*1000) - int(monotonic()*1000),
-                 ):
+    def __init__(self):
         self.__sid = 0
         self.__pid = 0
-        self.__difftime = difftime
         self.__sequence = 0
         self.__last = 0
 
@@ -61,9 +58,6 @@ class Gprimarykey(object):
             raise RuntimeError('pid should less then 256')
         self.__pid = pid
 
-    def update_diff(self, diff):
-        self.__diff = diff
-
     @property
     def sid(self):
         return self.__sid
@@ -72,10 +66,6 @@ class Gprimarykey(object):
     def pid(self):
         return self.__pid
 
-    @property
-    def difftime(self):
-        return self.__difftime
-
     def __call__(self):
         return self.makekey(self.__sid, self.__pid)
 
@@ -83,7 +73,7 @@ class Gprimarykey(object):
         """Make a global primark key"""
         if pid >= 256 or sid >= 2048:
             raise RuntimeError('sid should less then 2048 pid should less then 256')
-        cur = int(monotonic()*1000) + self.__difftime
+        cur = int(realnow()*1000)
         if self.__last == cur:
             if self.__sequence >= 8:
                 time.sleep(0.001)
