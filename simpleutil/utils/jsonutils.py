@@ -161,6 +161,18 @@ def loads_as_bytes(s, encoding='utf-8'):
     return loads(s, encoding, object_hook=object_hook)
 
 
+def safe_loads(var):
+    if var is None:
+        return None
+    return loads(var)
+
+
+def safe_load_as_bytes(var, encoding='utf-8'):
+    if var is None:
+        return None
+    return loads_as_bytes(var, encoding)
+
+
 def dumps(obj, default=to_primitive, **kwargs):
     return json.dumps(obj, default=default, **kwargs)
 
@@ -183,6 +195,18 @@ def dumps_as_bytes(obj, default=to_primitive, encoding='utf-8', **kwargs):
         # On Python 3, json.dumps() returns Unicode
         serialized = serialized.encode(encoding)
     return serialized
+
+
+def safe_dumps(var):
+    if var is None:
+        return None
+    return dumps(var)
+
+
+def safe_dumps_as_bytes(var):
+    if var is None:
+        return None
+    return dumps_as_bytes(var)
 
 
 def dump(obj, fp, *args, **kwargs):
