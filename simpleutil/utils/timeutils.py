@@ -302,3 +302,7 @@ def ntptime(host, version=2, port=123, timeout=5):
     except ntplib.NTPException as e:
         raise RuntimeError('NTP error: ' + e.message)
     return stat
+
+
+def unix_to_iso(t):
+    return datetime.datetime.fromtimestamp(t).strftime('%Y-%m-%d %H:%M:%S')
