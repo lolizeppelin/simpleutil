@@ -167,7 +167,7 @@ def safe_loads(var):
     return loads(var)
 
 
-def safe_load_as_bytes(var, encoding='utf-8'):
+def safe_loads_as_bytes(var, encoding='utf-8'):
     if var is None:
         return None
     return loads_as_bytes(var, encoding)
