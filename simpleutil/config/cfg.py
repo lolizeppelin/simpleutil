@@ -945,8 +945,18 @@ class HostnameOrIPOpt(Opt):
 
     def __init__(self, name, **kwargs):
         super(HostnameOrIPOpt, self).__init__(name, type=types.HostnameOrIP(),
-                                          **kwargs)
+                                              **kwargs)
 
+
+class ImportStringOpt(Opt):
+
+    """Option for a hostname.  Only accepts valid Import string.
+    Option with ``type`` :class:`oslo_config.types.ImportString`
+    """
+
+    def __init__(self, name, **kwargs):
+        super(ImportStringOpt, self).__init__(name, type=types.ImportString(),
+                                              **kwargs)
 
 
 class MultiOpt(Opt):
