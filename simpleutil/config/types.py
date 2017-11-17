@@ -748,9 +748,9 @@ class ImportString(ConfigType):
         if not re.match(self.modregx, class_str):
             raise ValueError("import string %s error, class match fail" % value)
         for _mod_str in mod_str.split('.'):
-            if not re.match(self.modregx, _mod_str):
+            if not re.match(self.modregx, _mod_str, re.IGNORECASE):
                 raise ValueError("import string %s error, mod match fail" % value)
-        return value.lower()
+        return value
 
     def __repr__(self):
         return 'ImportString'
