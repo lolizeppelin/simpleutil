@@ -1,9 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os
 import sys
-import platform
 import ctypes
-
 
 # copy from psutils
 POSIX = os.name == "posix"
@@ -21,15 +19,16 @@ AIX = sys.platform.startswith('aix')
 SYSENCODE = sys.getfilesystemencoding()
 
 
-def get_partion_free_bytes(folder):
-    """ Return folder/drive free space (in bytes)
-    """
-    if WINDOWS:
+if WINDOWS:
+    def get_partion_free_bytes(folder):
+        """ Return folder/drive free space (in bytes)
+        """
         free_bytes = ctypes.c_ulonglong(0)
         ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None,
                                                    ctypes.pointer(free_bytes))
         return free_bytes.value
-    else:
+else:
+    def get_partion_free_bytes(folder):
         # f_bsize: 文件系统块大小
         # f_frsize: 分栈大小
         # f_blocks: 文件系统数据块总数
@@ -62,4 +61,3 @@ def find_executable(executable):
                 if os.path.isfile(full_path):
                     return full_path
     raise NotImplementedError('executable %s not found' % executable)
-
