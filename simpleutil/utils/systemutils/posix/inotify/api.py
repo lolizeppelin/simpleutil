@@ -7,9 +7,9 @@ import select
 import collections
 
 from simpleutil.log import log as logging
-from simpleutil import system
-from simpleutil.posix.inotify import event
-from simpleutil.posix.inotify.clib import CtypesLibcINotify
+from simpleutil.utils import systemutils
+from simpleutil.utils.systemutils.posix.inotify import event
+from simpleutil.utils.systemutils.posix.inotify.clib import CtypesLibcINotify
 
 LOG = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ def format_path(path):
     # Therefore even wd are indexed with bytes string and not with
     # unicode paths.
     if isinstance(path, unicode):
-        path = path.encode(system.SYSENCODE)
+        path = path.encode(systemutils.SYSENCODE)
     return os.path.normpath(path)
 
 

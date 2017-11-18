@@ -5,7 +5,7 @@ import errno
 import ctypes
 import ctypes.util
 
-from simpleutil import system
+from simpleutil.utils import systemutils
 
 
 class CtypesLibcINotify(object):
@@ -22,7 +22,7 @@ class CtypesLibcINotify(object):
         assert ctypes
 
         try_libc_name = 'c'
-        if system.FREEBSD:
+        if systemutils.FREEBSD:
             try_libc_name = 'inotify'
 
         libc_name = None
@@ -33,7 +33,6 @@ class CtypesLibcINotify(object):
 
         self._libc = ctypes.CDLL(libc_name, use_errno=True)
         self._get_errno_func = ctypes.get_errno
-
 
         # Eventually check that libc has needed inotify bindings.
         if (not hasattr(self._libc, 'inotify_init') or
