@@ -1,14 +1,9 @@
 import platform
 from simpleutil.utils import systemutils
 
-def empty(*args, **kwargs):
-    """do nothing"""
-
-
-daemon = empty
-notify_once = empty
-notify = empty
-onready = empty
+notify_once = systemutils.empty
+notify = systemutils.empty
+onready = systemutils.empty
 
 # systemd function
 if systemutils.LINUX:
@@ -18,5 +13,4 @@ if systemutils.LINUX:
         notify_once = linux.notify_once
         notify = linux.notify
         onready = linux.onready
-    else:
-        daemon = linux.daemon
+

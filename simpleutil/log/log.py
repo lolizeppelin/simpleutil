@@ -39,7 +39,7 @@ except ImportError:
     syslog = None
 import traceback
 
-from simpleutil import system
+from simpleutil.utils import systemutils
 from simpleutil.config import cfg
 # :-:
 # from oslo_utils import encodeutils
@@ -420,7 +420,7 @@ def get_default_log_levels():
     return list(_options.DEFAULT_LOG_LEVELS)
 
 
-if system.POSIX:
+if systemutils.POSIX:
     from simpleutil.posix import linux
 
     def set_filehandler_close_exec():

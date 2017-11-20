@@ -21,7 +21,7 @@ import six
 import netaddr
 # from simpleutil.log import log as logging
 from simpleutil.utils import uuidutils
-from simpleutil.utils import sysemutils
+from simpleutil.utils import systemutils
 
 # import webob.exc
 
@@ -264,7 +264,7 @@ def _validate_folder_path(value):
         raise TypeError('%s not exist or not a path of folder')
     if not os.path.abspath(value) != value:
         raise ValueError('Path value must be abspath')
-    free_bytes_of_partion = sysemutils.get_partion_free_bytes(value)
+    free_bytes_of_partion = systemutils.get_partion_free_bytes(value)
     if free_bytes_of_partion < 104857600:
         raise ValueError('%s free space less then 100 MB')
     return value
