@@ -421,7 +421,7 @@ def get_default_log_levels():
 
 
 if systemutils.POSIX:
-    from simpleutil.posix import linux
+    from simpleutil.utils.systemutils.posix import linux
 
     def set_filehandler_close_exec():
         log_root = getLogger(None).logger

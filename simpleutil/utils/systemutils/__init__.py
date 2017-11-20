@@ -4,6 +4,7 @@ import sys
 import errno
 import ctypes
 import eventlet
+import contextlib
 
 # copy from psutils
 POSIX = os.name == "posix"
@@ -103,3 +104,17 @@ def subwait(sub, timeout=None):
                 if exc.errno not in (errno.EINTR, errno.ECHILD):
                     raise OSError('waitpid get errorno %d' % exc.errno)
                 continue
+
+
+if POSIX:
+    @contextlib.contextmanager
+    def umask(mask=022):
+        default = os.umask(mask)
+        try:
+            yield
+        finally:
+            os.umask(default)
+else:
+    @contextlib.contextmanager
+    def umask(mask):
+        yield
