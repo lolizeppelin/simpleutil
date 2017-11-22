@@ -238,31 +238,32 @@ def _validate_ports_range(value):
 def _validate_ports_range_list(value):
     if isinstance(value, (int, long, basestring)):
         return [_validate_ports_range(value), ]
-    if isinstance(value, (list, tuple, set, frozenset)):
-        ports_range_list = []
-        for port_range in value:
-            ports_range_list.append(_validate_ports_range(port_range))
-        ports_range_list.sort(key=lambda x: int(x.split('-')[0]))
-        last = 0
-        for ports_range in ports_range_list:
-            d_port, u_port = map(int, ports_range.split('-'))
-            if last == 0:
-                last = u_port
-                continue
-            if d_port < last:
-                raise ValueError('Port range find duplicate ports range')
+    if not isinstance(value, (list, tuple, set, frozenset)):
+        raise ValueError('Port range list type error')
+    ports_range_list = []
+    for port_range in value:
+        ports_range_list.append(_validate_ports_range(port_range))
+    ports_range_list.sort(key=lambda x: int(x.split('-')[0]))
+    last = 0
+    for ports_range in ports_range_list:
+        d_port, u_port = map(int, ports_range.split('-'))
+        if last == 0:
             last = u_port
-        return ports_range_list
-    raise ValueError('Port range list type error')
+            continue
+        if d_port < last:
+            raise ValueError('Port range find duplicate ports range')
+        last = u_port
+    return ports_range_list
+
 
 
 
 def _validate_folder_path(value):
     if not isinstance(value, basestring):
-        raise TypeError('folder path value not basestring')
-    if not os.path.exists(value) or os.path.isdir(value):
-        raise TypeError('%s not exist or not a path of folder')
-    if not os.path.abspath(value) != value:
+        raise ValueError('folder path value not basestring')
+    if not os.path.exists(value) or not os.path.isdir(value):
+        raise ValueError('%s not exist or not a path of folder' % value)
+    if os.path.abspath(value) != value:
         raise ValueError('Path value must be abspath')
     free_bytes_of_partion = systemutils.get_partion_free_bytes(value)
     if free_bytes_of_partion < 104857600:

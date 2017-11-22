@@ -107,14 +107,42 @@ def subwait(sub, timeout=None):
 
 
 if POSIX:
+    import pwd
+    import grp
+
     @contextlib.contextmanager
-    def umask(mask=022):
-        default = os.umask(mask)
+    def umask(umask=022):
+        default = os.umask(umask)
         try:
-            yield
+            yield umask
         finally:
             os.umask(default)
+
+    def chmod(path, mask):
+        if os.path.isdir(path):
+            os.chmod(path, 777-mask)
+        else:
+            os.chmod(path, 666-mask)
+
+    def chown(path, user, group):
+        try:
+            uid = int(user)
+        except (TypeError, ValueError):
+            uid = pwd.getpwnam(user).pw_uid
+        try:
+            gid = int(group)
+        except (TypeError, ValueError):
+            gid = grp.getgrnam(group).gr_gid
+        os.chown(path, uid, gid)
+
 else:
     @contextlib.contextmanager
-    def umask(mask):
-        yield
+    def umask(umask):
+        yield umask
+
+    chmod = empty
+
+    chown = empty
+
+
+
