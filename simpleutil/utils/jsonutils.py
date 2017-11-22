@@ -158,7 +158,12 @@ def loads(s, encoding='utf-8', **kwargs):
 
 def loads_as_bytes(s, encoding='utf-8'):
     object_hook = _object_hook(encoding)
-    return loads(s, encoding, object_hook=object_hook)
+    obj = loads(s, encoding, object_hook=object_hook)
+    if isinstance(obj, list):
+        for index, value in enumerate(obj):
+            if isinstance(value, unicode):
+                obj[index] = encodeutils.safe_encode(value, encoding)
+    return obj
 
 
 def safe_loads(var):
