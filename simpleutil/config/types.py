@@ -730,7 +730,7 @@ class HostnameOrIP(ConfigType):
 
 class ImportString(ConfigType):
 
-    modregx = re.compile('^[a-z_]+$')
+    modregx = re.compile('^[a-zA-Z_]+$')
 
     def __init__(self, type_name='import string value'):
         super(ImportString, self).__init__(type_name=type_name)
@@ -740,7 +740,7 @@ class ImportString(ConfigType):
             raise ValueError("Cannot have %s" % value)
         if len(value) > 256:
             raise ValueError("import string over size")
-        mod_str, _sep, class_str = value.lower().rpartition('.')
+        mod_str, _sep, class_str = value.rpartition('.')
         if _sep != '.':
             raise ValueError("import string %s error, sep not '.'" % value)
         if not mod_str or not class_str:
@@ -748,7 +748,7 @@ class ImportString(ConfigType):
         if not re.match(self.modregx, class_str):
             raise ValueError("import string %s error, class match fail" % value)
         for _mod_str in mod_str.split('.'):
-            if not re.match(self.modregx, _mod_str, re.IGNORECASE):
+            if not re.match(self.modregx, _mod_str):
                 raise ValueError("import string %s error, mod match fail" % value)
         return value
 
