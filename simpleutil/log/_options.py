@@ -41,16 +41,19 @@ DEFAULT_LOG_LEVELS = [
 _IGNORE_MESSAGE = "This option is ignored if log_config_append is set."
 
 common_cli_opts = [
-    cfg.BoolOpt('debug',
-                short='d',
-                default=False,
-                help='If set to true, the logging level will be set to '
-                     'DEBUG instead of the default INFO level.'),
-    cfg.BoolOpt('verbose',
-                short='v',
-                default=True,
-                help='If set to false, the logging level will be set to '
-                     'WARNING instead of the default INFO level.'),
+    # cfg.BoolOpt('debug',
+    #             short='d',
+    #             default=False,
+    #             help='If set to true, the logging level will be set to '
+    #                  'DEBUG instead of the default INFO level.'),
+    # cfg.BoolOpt('verbose',
+    #             short='v',
+    #             default=True,
+    #             help='If set to false, the logging level will be set to '
+    #                  'WARNING instead of the default INFO level.'),
+    cfg.StrOpt('loglevel',
+               default='WARNING',
+               help='set the default logging level'),
 ]
 
 logging_cli_opts = [
