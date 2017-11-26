@@ -355,11 +355,16 @@ def _setup_logging_from_conf(conf, project, version):
                                                          version=version,
                                                          datefmt=datefmt,
                                                          config=conf))
-
-    if conf.debug:
-        log_root.setLevel(logging.DEBUG)
-    elif conf.verbose:
-        log_root.setLevel(logging.INFO)
+    # if conf.debug:
+    #     log_root.setLevel(logging.DEBUG)
+    # elif conf.verbose:
+    #     log_root.setLevel(logging.INFO)
+    if conf.loglevel:
+        try:
+            lv = int(conf.loglevel)
+        except ValueError:
+            lv = conf.loglevel.upper()
+        log_root.setLevel(lv)
     else:
         log_root.setLevel(logging.WARNING)
 
