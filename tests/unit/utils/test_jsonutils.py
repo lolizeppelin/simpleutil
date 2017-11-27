@@ -32,3 +32,47 @@ x = {'agent_time': 1511616056, 'expire': 60, 'result': 'Get status from 127.0.0.
 
 
 print jsonutils.schema_validate(x, RESPONESCHEMA)
+
+
+CDN = 'gopcdn'
+
+ENABLE = 1
+DISENABLE = 0
+
+ANY = 0
+ANDROID = 1
+IOS = 2
+
+EntityTypeMap = {IOS: 'ios',
+                 ANDROID: 'android',
+                 ANY: 'any'}
+
+InvertEntityTypeMap = dict([(v, k) for k, v in EntityTypeMap.iteritems()])
+
+
+CREATESCHEMA = {
+    'type': 'object',
+    'required': ['endpoint', 'etype'],
+    'properties':
+        {
+            'endpoint':  {'type': 'string', 'description': 'provide cdn resource for this endpoint'},
+            'etype': {'oneOf': [{'type': 'string', 'enum': InvertEntityTypeMap.keys()},
+                                {'type': 'integer', 'enum': EntityTypeMap.keys()}],
+                      'description': 'entity type, ios,android'},
+            'impl': {'type': 'string', 'description': 'impl type, svn git nfs'},
+            'uri': {'type': 'string', 'description': 'impl checkout uri'},
+            'version': {'type': 'string'},
+            'timeout': {'type': 'integer', 'minimum': 10, 'maxmum': 3600,
+                        'description': 'impl checkout timeout'},
+            'auth': {'type': 'object'},
+            'cdnhost': {'type': 'object',
+                        'required': ['hostname'],
+                        'properties': {'hostname': {'type': 'string'},
+                                       'listen': {'type': 'integer', 'minimum': 1, 'maxmum': 65535},
+                                       'charset': {'type': 'string'},
+                                       }},
+        }
+}
+
+
+jsonutils.schema_validate({'endpoint': 'a', 'etype': 'ios'}, CREATESCHEMA)

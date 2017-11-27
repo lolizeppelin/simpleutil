@@ -305,5 +305,9 @@ FormatChecker = jsonschema.FormatChecker()
 
 def schema_validate(data, schema, checker=None):
     """Validates given data using provided json schema."""
-    jsonschema.validate(data, schema, types=_SCHEMA_TYPES,
-                        format_checker=checker or FormatChecker)
+    try:
+        jsonschema.validate(data, schema, types=_SCHEMA_TYPES,
+                            format_checker=checker or FormatChecker)
+    except ValidationError as e:
+        # LOG.exception(e.message)
+        raise ValueError('jsonschema error:%s' % e.message.replace('"', ' '))
