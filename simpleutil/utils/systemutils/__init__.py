@@ -137,12 +137,9 @@ if POSIX:
 
 else:
     @contextlib.contextmanager
-    def umask(umask):
-        yield umask
+    def umask(*args):
+        yield None
 
     chmod = empty
 
     chown = empty
-
-
-
