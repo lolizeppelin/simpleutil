@@ -426,15 +426,15 @@ def get_default_log_levels():
 
 
 if systemutils.POSIX:
-    from simpleutil.utils.systemutils.posix import linux
+    from simpleutil.utils.systemutils import posix
 
     def set_filehandler_close_exec():
         log_root = getLogger(None).logger
         for handler in list(log_root.handlers):
             if isinstance(handler, logging.StreamHandler):
-                linux.set_cloexec_flag(handler.stream.fileno())
+                posix.set_cloexec_flag(handler.stream.fileno())
             elif isinstance(handler, logging.handlers.SysLogHandler):
-                linux.set_cloexec_flag(handler.socket.fileno())
+                posix.set_cloexec_flag(handler.socket.fileno())
 
 
     def set_syslog_handler_close_exec():

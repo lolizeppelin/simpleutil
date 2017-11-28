@@ -91,6 +91,9 @@ for key in _SANITIZE_KEYS:
         _SANITIZE_PATTERNS_1[key].append(reg_ex)
 
 
+Split = re.compile(r'\s').split
+
+
 def int_from_bool_as_string(subject):
     """Interpret a string as a boolean and return either 1 or 0.
 
