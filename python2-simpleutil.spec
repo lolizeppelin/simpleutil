@@ -3,9 +3,11 @@
 
 %define proj_name simpleutil
 
+%define _release RELEASEVERSION
+
 Name:           python-%{proj_name}
 Version:        1.0.0
-Release:        0%{?dist}
+Release:        %{_release}%{?dist}
 Summary:        simpleutil copy from openstack
 Group:          Development/Libraries
 License:        MPLv1.1 or GPLv2
