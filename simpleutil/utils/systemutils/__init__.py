@@ -191,8 +191,14 @@ elif WINDOWS:
             if isinstance(excludes, basestring):
                 excludes = [excludes, ]
             for exclude in excludes:
-                folder = fso.GetFolder(os.path.join(path, exclude))
-                rootsize -= folder.Size
+                exclude = os.path.join(path, exclude)
+                if not os.path.exists(exclude):
+                    continue
+                if os.path.isfile(exclude):
+                    rootsize -= os.path.getsize(exclude)
+                else:
+                    folder = fso.GetFolder()
+                    rootsize -= folder.Size
         return rootsize
 
 else:
