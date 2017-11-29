@@ -27,7 +27,20 @@ def async_extract(src, dst, exclude=None,
 
 
 def async_compress(src, dst, exclude=None,
+                   native=True,
                    timeout=None, fork=None):
+    """
+    压缩至文件,需要传输到流中需要使用其他recv
+    @param src:             压缩源文件/文件夹
+    @param dst:             压缩输出文件
+    @param exclude:         压缩排除文件,callable
+    @param native:          是否使用python原生代码压缩,速度慢,但是排除支持较好
+                            目前只支持native方式压缩
+    @param timeout:         超时时间
+    @param fork:            封装好的fork函数,在linux上推举传入
+    @return None:           当前方法无返回值
+    @raise TypeError:       压缩方式不支持
+    """
     timeout = float(timeout) if timeout else None
     comptype = os.path.splitext(dst)[1][1:]
     worker = ZlibStream(src, comptype=comptype,
