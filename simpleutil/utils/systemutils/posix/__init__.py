@@ -24,7 +24,7 @@ def set_cloexec_flag(fd, cloexec=True):
 
 def wait(pid, timeout=None):
     used_time = 0.0
-    timeout = float(timeout) if timeout else None
+    timeout = float(timeout) + 0.1 if timeout else None
     while True:
         try:
             # same as eventlet.green.os.wait

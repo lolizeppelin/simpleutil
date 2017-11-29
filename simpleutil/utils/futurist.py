@@ -9,7 +9,6 @@ from simpleutil.utils import threadgroup
 
 NOT_FINISH = object()
 
-hub = eventlet.hubs.get_hub()
 
 class Error(Exception):
     """Base class for all future-related exceptions."""
@@ -52,6 +51,9 @@ class Future(object):
         if self._result is not NOT_FINISH:
             return self._result
         if timeout is None:
+            if self._thread is None:
+                self()
+                return self._result
             try:
                 self._thread.wait()
             except GreenletExit:
@@ -64,6 +66,7 @@ class Future(object):
                 raise RuntimeError('Future thred is None, aynce is disable')
             _finish = object()
             _timeout = object()
+            hub = eventlet.hubs.get_hub()
             me = eventlet.getcurrent()
             # switch back when thread finished
             callback = me.switch
@@ -87,6 +90,8 @@ class Future(object):
                 raise RuntimeError('Unexcept switch back')
 
     def cancel(self):
+        if self.canceled:
+            return 
         if self._result is not NOT_FINISH:
             raise RuntimeError('Work has been finished')
         self.canceled = True
@@ -163,6 +168,7 @@ def future_wait(futures, timeout, ok_count=1):
     callback = me.switch
     for future in not_done:
         future._thread.link(callback, _finish)
+    hub = eventlet.hubs.get_hub()
     timer = hub.schedule_call_global(timeout, callback, _timeout)
     count = len(done)
     while True:

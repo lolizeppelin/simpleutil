@@ -7,8 +7,6 @@ import subprocess
 import eventlet
 import contextlib
 
-from eventlet import hubs
-
 from simpleutil.utils import strutils
 
 # copy from psutils
@@ -29,7 +27,6 @@ INTERVAL = 0.01
 
 TIMEOUT = object()
 
-hub = eventlet.hubs.get_hub()
 
 class ExitBySIG(Exception):
     """"""
@@ -93,7 +90,7 @@ def subwait(sub, timeout=None):
 if POSIX:
     import pwd
     import grp
-    from .posix import set_cloexec_flag
+    from simpleutil.utils.systemutils.posix import set_cloexec_flag
 
     @contextlib.contextmanager
     def umask(umask=022):
@@ -202,4 +199,4 @@ elif WINDOWS:
         return rootsize
 
 else:
-    raise RuntimeError
+    raise RuntimeError('System type unkonwn')
