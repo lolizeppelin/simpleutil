@@ -24,7 +24,7 @@ class Thread(object):
      the :class:`ThreadGroup` when it has done so it can be removed from
      the threads list.
     """
-    def __init__(self, thread, group):
+    def __init__(self, thread, group=None):
         self.thread = thread
         self.thread.link(self.on_thread_done, group)
         self._ident = id(thread)
@@ -34,7 +34,8 @@ class Thread(object):
         Calls the :class:`ThreadGroup` to notify it to remove this thread from
         the associated group.
         """
-        group.thread_done(self)
+        if group:
+            group.thread_done(self)
 
     @property
     def ident(self):
