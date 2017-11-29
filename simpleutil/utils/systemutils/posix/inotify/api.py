@@ -99,7 +99,7 @@ class Notifier(object):
             if not self._fd:
                 break
             try:
-                # select is eventlet.green.select
+                # select must be the eventlet.green.select
                 rlist, wlist, errlist = select.select(watch_list, empty_w_list, empty_e_list,
                                                       timeout=self.interval)
             except (OSError, IOError):
