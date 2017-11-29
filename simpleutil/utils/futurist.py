@@ -31,11 +31,15 @@ class Future(object):
         self._result = NOT_FINISH
         self.canceled = False
 
-    def link(self, thread):
+    def link(self, pool=None):
         if self._thread:
-            if thread is not self._thread:
-                raise RuntimeError('Do not link twice')
-        self._thread = thread
+            raise RuntimeError('Do not link twice')
+        if pool is None:
+            self._thread = threadgroup.Thread(eventlet.spawn(self))
+        else:
+            self._thread = pool.add_thread(self)
+
+    start = link
 
     def __call__(self):
         # do not raise anything from _func
@@ -56,6 +60,8 @@ class Future(object):
                 raise RuntimeError('Future unexcept switch back')
             return self._result
         else:
+            if not self._thread:
+                raise RuntimeError('Future thred is None, aynce is disable')
             _finish = object()
             _timeout = object()
             me = eventlet.getcurrent()
@@ -111,8 +117,7 @@ class GreenThreadPoolExecutor(object):
     def _submit(self, fn, *args, **kwargs):
         func = functools.partial(fn, *args, **kwargs)
         fut = Future(func)
-        thread = self._pool.add_thread(fut)
-        fut.link(thread)
+        fut.link(self._pool)
         return fut
 
     def shutdown(self, wait=True):
