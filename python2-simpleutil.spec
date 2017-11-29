@@ -28,7 +28,7 @@ Requires:       python-ntplib >= 0.3.3
 
 %if 0%{?rhel} > 6
 Requires:       python-jsonschema > 2.5.0, python-jsonschema < 3.0.0
-%elif
+%endif
 %if 0%{?rhel} < 7
 Requires:       python-jsonschema >= 2.0.0, python-jsonschema < 2.5.0
 %endif
