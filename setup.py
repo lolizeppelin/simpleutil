@@ -5,7 +5,7 @@ import os
 from simpleutil import __version__
 
 try:
-    from setuptools import setup
+    from setuptools import setup, find_packages
 except ImportError:
     from distutils.core import setup
 
@@ -34,7 +34,7 @@ setup(
     maintainer_email='lolizeppelin@gmail.com',
     keywords=['simpleutil'],
     license='MIT',
-    packages=['simpleutil'],
+    packages=find_packages(exclude=['test', 'doc', 'bin', 'etc']),
     # tests_require=['pytest>=2.5.0'],
     # cmdclass={'test': PyTest},
     classifiers=[
