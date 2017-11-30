@@ -6,7 +6,7 @@
 %define _release RELEASEVERSION
 
 Name:           python-%{proj_name}
-Version:        1.0.0
+Version:        RPMVERSION
 Release:        %{_release}%{?dist}
 Summary:        simpleutil copy from openstack
 Group:          Development/Libraries
