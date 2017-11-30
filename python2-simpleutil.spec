@@ -54,8 +54,9 @@ rm -rf %{proj_name}.egg-info
 
 %files
 %defattr(-,root,root,-)
-%dir %{python_sitelib}/%{proj_name}*
-%{python_sitelib}/%{proj_name}*/*
+%dir %{python_sitelib}/%{proj_name}/*
+%{python_sitelib}/%{proj_name}-%{version}-*.egg-info/*
+%dir %{python_sitelib}/%{proj_name}-%{version}-*.egg-info/
 %doc README.rst
 %doc doc/*
 
