@@ -161,32 +161,32 @@ class ContextFormatter(logging.Formatter):
         record.project = self.project
         record.version = self.version
         instance_extra = ''
-        instance = getattr(record, 'instance', None)
-        instance_uuid = getattr(record, 'instance_uuid', None)
-        context = _update_record_with_context(record)
-        if instance:
-            try:
-                instance_extra = (self.conf.instance_format
-                                  % instance)
-            except TypeError:
-                instance_extra = instance
-        elif instance_uuid:
-            instance_extra = (self.conf.instance_uuid_format
-                              % {'uuid': instance_uuid})
-        elif context:
-            instance = getattr(context, 'instance', None)
-            instance_uuid = getattr(context, 'instance_uuid', None)
-            resource_uuid = getattr(context, 'resource_uuid', None)
-
-            if instance:
-                instance_extra = (self.conf.instance_format
-                                  % {'uuid': instance})
-            elif instance_uuid:
-                instance_extra = (self.conf.instance_uuid_format
-                                  % {'uuid': instance_uuid})
-            elif resource_uuid:
-                instance_extra = (self.conf.instance_uuid_format
-                                  % {'uuid': resource_uuid})
+        # instance = getattr(record, 'instance', None)
+        # instance_uuid = getattr(record, 'instance_uuid', None)
+        # context = _update_record_with_context(record)
+        # if instance:
+        #     try:
+        #         instance_extra = (self.conf.instance_format
+        #                           % instance)
+        #     except TypeError:
+        #         instance_extra = instance
+        # elif instance_uuid:
+        #     instance_extra = (self.conf.instance_uuid_format
+        #                       % {'uuid': instance_uuid})
+        # elif context:
+        #     instance = getattr(context, 'instance', None)
+        #     instance_uuid = getattr(context, 'instance_uuid', None)
+        #     resource_uuid = getattr(context, 'resource_uuid', None)
+        #
+        #     if instance:
+        #         instance_extra = (self.conf.instance_format
+        #                           % {'uuid': instance})
+        #     elif instance_uuid:
+        #         instance_extra = (self.conf.instance_uuid_format
+        #                           % {'uuid': instance_uuid})
+        #     elif resource_uuid:
+        #         instance_extra = (self.conf.instance_uuid_format
+        #                           % {'uuid': resource_uuid})
 
         record.instance = instance_extra
 

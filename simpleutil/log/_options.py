@@ -145,14 +145,14 @@ log_opts = [
     # NOTE(mikal): there are two options here because sometimes we are handed
     # a full instance (and could include more information), and other times we
     # are just handed a UUID for the instance.
-    cfg.StrOpt('instance_format',
-               default='[instance: %(uuid)s] ',
-               help='The format for an instance that is passed with the log '
-                    'message.'),
-    cfg.StrOpt('instance_uuid_format',
-               default='[instance: %(uuid)s] ',
-               help='The format for an instance UUID that is passed with the '
-                    'log message.'),
+    # cfg.StrOpt('instance_format',
+    #            default='[instance: %(uuid)s] ',
+    #            help='The format for an instance that is passed with the log '
+    #                 'message.'),
+    # cfg.StrOpt('instance_uuid_format',
+    #            default='[instance: %(uuid)s] ',
+    #            help='The format for an instance UUID that is passed with the '
+    #                 'log message.'),
 ]
 
 
@@ -173,8 +173,9 @@ def list_opts():
 
     :returns: a list of (group_name, opts) tuples
     """
-    return [(None, (common_cli_opts + logging_cli_opts +
-                    generic_log_opts + log_opts))]
+    # return [(None, (common_cli_opts + logging_cli_opts +
+    #                 generic_log_opts + log_opts))]
                     # :-:
                     # generic_log_opts + log_opts +
                     # versionutils.deprecated_opts))]
+    return common_cli_opts + logging_cli_opts + generic_log_opts + log_opts
