@@ -1,4 +1,4 @@
-import tests
+import test
 import eventlet
 import eventlet.hubs
 from simpleutil.utils.lockutils import PriorityLock
