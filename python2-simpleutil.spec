@@ -25,6 +25,7 @@ Requires:       python-eventlet >= 0.15.2
 Requires:       python-six >= 1.9.0
 Requires:       python-funcsigs >= 0.4
 Requires:       python-ntplib >= 0.3.3
+Requires:       python-dateutil >=2.4.2
 Requires:       tar >= 1.2.0
 Requires:       unzip >= 5.0
 

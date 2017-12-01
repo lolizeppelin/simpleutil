@@ -18,6 +18,7 @@ setup(
     # oslo_cfg 要求 netaddr!=0.7.16,>=0.7.12 # BSD
     # kombu>=3.0.25否则timeout参数有问题
     install_requires=('netaddr>=0.7.5', 'eventlet>=0.15.2', 'six>=1.9.0',
+                      'python-dateutil>=2.4.2',
                       'funcsigs>=0.4', # python3 do not need it
                       'ntplib>=0.3.3',
                       'jsonschema>=2.0.0',
