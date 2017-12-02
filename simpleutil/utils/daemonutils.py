@@ -177,8 +177,9 @@ if systemutils.LINUX:
             linux.drop_privileges(self.user, self.group)
 
 
-    def daemon(pidfile, user=None, group=None):
-        daemon_intance = Daemon(pidfile=pidfile, user=user, group=group)
+    def daemon(pidfile, procname, user=None, group=None):
+        daemon_intance = Daemon(pidfile=pidfile, procname=procname,
+                                user=user, group=group)
         daemon_intance.start()
 else:
     daemon = systemutils.empty

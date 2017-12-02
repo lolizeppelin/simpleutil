@@ -2,6 +2,7 @@ __version__ = '1.0.0'
 VERSION = tuple(map(int, __version__.split('.')))
 
 import logging
+import warnings
 import functools
 import eventlet
 import sys
@@ -37,7 +38,6 @@ else:
     sys.setdefaultencoding('utf-8')
 
 
-
 if not hasattr(logging, '_checkLevel'):
     # Patch for python 2.6 logging
     def _checkLevel(level):
@@ -50,11 +50,74 @@ if not hasattr(logging, '_checkLevel'):
         else:
             raise TypeError("Level not an integer or a valid string: %r" % level)
         return rv
-    # setattr(logging, '_checkLevel', _checkLevel)
+    setattr(logging, '_checkLevel', _checkLevel)
     def setLevel(self, level):
         self.level = _checkLevel(level)
+
     logging.Logger.setLevel = setLevel
     logging.Handler.setLevel = setLevel
+
+
+if not hasattr(logging, '_warnings_showwarning'):
+    setattr(logging, '_warnings_showwarning', None)
+
+
+if not hasattr(logging, 'NullHandler'):
+    class NullHandler(logging.Handler):
+        """
+        This handler does nothing. It's intended to be used to avoid the
+        "No handlers could be found for logger XXX" one-off warning. This is
+        important for library code, which may contain code to log events. If a user
+        of the library does not configure logging, the one-off warning might be
+        produced; to avoid this, the library developer simply needs to instantiate
+        a NullHandler and add it to the top-level logger of the library module or
+        package.
+        """
+        def handle(self, record):
+            pass
+
+        def emit(self, record):
+            pass
+
+        def createLock(self):
+            self.lock = None
+
+    setattr(logging, 'NullHandler', NullHandler)
+
+
+if not hasattr(logging, '_showwarning'):
+    def _showwarning(message, category, filename, lineno, file=None, line=None):
+        if file is not None:
+            if logging._warnings_showwarning is not None:
+                logging._warnings_showwarning(message, category, filename, lineno, file, line)
+        else:
+            s = warnings.formatwarning(message, category, filename, lineno, line)
+            logger = logging.getLogger("py.warnings")
+            if not logger.handlers:
+                logger.addHandler(logging.NullHandler())
+            logger.warning("%s", s)
+
+    setattr(logging, '_showwarning', _showwarning)
+
+
+if not hasattr(logging, 'captureWarnings'):
+    def captureWarnings(capture):
+        """
+        If capture is true, redirect all warnings to the logging package.
+        If capture is False, ensure that warnings are not redirected to logging
+        but to their original destinations.
+        """
+        if capture:
+            if logging._warnings_showwarning is None:
+                logging._warnings_showwarning = warnings.showwarning
+                warnings.showwarning = _showwarning
+        else:
+            if logging._warnings_showwarning is not None:
+                warnings.showwarning = logging._warnings_showwarning
+                logging._warnings_showwarning = None
+
+    setattr(logging, 'captureWarnings', captureWarnings)
+
 
 if not hasattr(functools, 'total_ordering'):
 
@@ -86,3 +149,5 @@ if not hasattr(functools, 'total_ordering'):
         return cls
 
     setattr(functools, 'total_ordering', total_ordering)
+
+warnings.filterwarnings("ignore",category=DeprecationWarning)
