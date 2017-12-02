@@ -97,7 +97,9 @@ if systemutils.LINUX:
             self.stdout = stdout
             self.stderr = stderr
             self.procname = procname
-            self.pidfile = pidfile
+            # self.pidfile = pidfile
+            self.pidfile = (Pidfile(pidfile, procname, uuid)
+                            if pidfile is not None else None)
             self.user = user
             self.group = group
             self.watch_log = watch_log
