@@ -161,6 +161,7 @@ class ContextFormatter(logging.Formatter):
         record.project = self.project
         record.version = self.version
         instance_extra = ''
+        context = None
         # instance = getattr(record, 'instance', None)
         # instance_uuid = getattr(record, 'instance_uuid', None)
         # context = _update_record_with_context(record)

@@ -21,7 +21,7 @@ BuildRequires:  python-setuptools >= 11.0
 Requires:       python >= 2.6.6
 Requires:       python < 3.0
 Requires:       python-netaddr >= 0.7.5
-Requires:       python-eventlet >= 0.15.2
+Requires:       python-eventlet >= 0.18.4
 Requires:       python-six >= 1.9.0
 Requires:       python-funcsigs >= 0.4
 Requires:       python-ntplib >= 0.3.3
