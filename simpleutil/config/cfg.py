@@ -1889,6 +1889,8 @@ class ConfigOpts(collections.Mapping):
 
         :param group: an OptGroup object
         """
+        if not isinstance(group.name, basestring):
+            raise RuntimeError('Group name is not basestring')
         if group.name in self._groups:
             return
 
@@ -2107,7 +2109,6 @@ class ConfigOpts(collections.Mapping):
             opt = self._get_opt_info(opt_name)['opt']
             logger.log(lvl, "%-30s = %s", opt_name,
                        _sanitize(opt, getattr(self, opt_name)))
-
         for group_name in self._groups:
             group_attr = self.GroupAttr(self, self._get_group(group_name))
             for opt_name in sorted(self._groups[group_name]._opts):
