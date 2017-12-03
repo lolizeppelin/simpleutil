@@ -86,7 +86,7 @@ def drop_privileges(user=None, group=None):
     if user is not None:
         setuid(user)
 
-    logging.info("Process runs with uid/gid: %(uid)s/%(gid)s" % {'uid': os.getuid(), 'gid': os.getgid()})
+    # logging.info("Process runs with uid/gid: %(uid)s/%(gid)s" % {'uid': os.getuid(), 'gid': os.getgid()})
 
 
 # -----------------------下面是systemd相关通知函数------------------#
