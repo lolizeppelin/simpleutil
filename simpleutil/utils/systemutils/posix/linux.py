@@ -11,7 +11,7 @@ def user_exist(user):
     if isinstance(user, (int, long)):
         func = pwd.getpwuid
     elif isinstance(user, basestring):
-        func = grp.getpwnam
+        func = pwd.getpwnam
     else:
         raise TypeError('group type error')
     try:
