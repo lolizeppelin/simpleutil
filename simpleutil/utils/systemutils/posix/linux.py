@@ -13,7 +13,7 @@ def user_exist(user):
     elif isinstance(user, basestring):
         func = pwd.getpwnam
     else:
-        raise TypeError('group type error')
+        raise TypeError('user type error, not int or basestring')
     try:
         func(user)
     except KeyError:
@@ -28,7 +28,7 @@ def group_exist(group):
 
         func = grp.getgrnam
     else:
-        raise TypeError('group type error')
+        raise TypeError('group type error, not int or basestring')
     try:
         func(group)
     except KeyError:
