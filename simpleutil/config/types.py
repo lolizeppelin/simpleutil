@@ -168,7 +168,7 @@ class String(ConfigType):
     def __repr__(self):
         details = []
         if self.choices:
-            details.append("choices=%r" % self.choices)
+            details.append("choices=%r" % str(self.choices))
         if self.regex:
             details.append("regex=%r" % self.regex.pattern)
         if details:
@@ -732,12 +732,8 @@ class ImportString(String):
 
     modregx = re.compile('^[a-zA-Z_]+$')
 
-    def __init__(self, type_name='import string value'):
-        super(ImportString, self).__init__(type_name=type_name,
-                                           max_length=128)
-
-    def __call__(self, value):
-        value = super(ImportString, self).__call__(value)
+    @staticmethod
+    def check(value):
         if len(value) < 3:
             raise ValueError("Cannot have %s" % value)
         if len(value) > 128:
@@ -747,12 +743,18 @@ class ImportString(String):
             raise ValueError("import string %s error, sep not '.'" % value)
         if not mod_str or not class_str:
             raise ValueError("import string %s error, mod or class is empty" % value)
-        if not re.match(self.modregx, class_str):
+        if not re.match(ImportString.modregx, class_str):
             raise ValueError("import string %s error, class match fail" % value)
         for _mod_str in mod_str.split('.'):
-            if not re.match(self.modregx, _mod_str):
+            if not re.match(ImportString.modregx, _mod_str):
                 raise ValueError("import string %s error, mod match fail" % value)
         return value
+
+    def __init__(self, type_name='import string value'):
+        super(ImportString, self).__init__(type_name=type_name, max_length=128)
+
+    def __call__(self, value):
+        return self.check(super(ImportString, self).__call__(value))
 
     def __repr__(self):
         return 'ImportString'
@@ -764,28 +766,14 @@ class ImportString(String):
         return value
 
 
-class MultiImportString(ImportString):
+class MultiImportString(MultiString):
 
     def __init__(self, type_name='multi import string'):
-        super(ImportString, self).__init__(type_name=type_name)
+        super(MultiImportString, self).__init__(type_name=type_name)
 
-    def __call__(self, value):
-        if isinstance(value, list):
-            return self._formatter(value)
-        else:
-            return ImportString.__call__(self, value)
-
-    def format_defaults(self, default, sample_default=None):
-        """Return a list of formatted default values.
-
-        """
-        if sample_default is not None:
-            default_list = self._formatter(sample_default)
-        elif not default:
-            default_list = []
-        else:
-            default_list = self._formatter(default)
-        return default_list
+    def __repr__(self):
+        return 'MultiImportString'
 
     def _formatter(self, value):
-        return [self.quote_trailing_and_leading_space(v) for v in value]
+        return [self.quote_trailing_and_leading_space(ImportString.check(v)) for v in value]
+

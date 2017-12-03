@@ -389,7 +389,6 @@ class Opt(object):
         if name.startswith('_'):
             raise ValueError('illegal name %s with prefix _' % (name,))
         self.name = name
-
         if type is None:
             type = types.String()
 
@@ -714,7 +713,7 @@ class StrOpt(Opt):
                                          regex=regex,
                                          ignore_case=ignore_case,
                                          max_length=max_length),
-                                     **kwargs)
+                                         **kwargs)
 
 
 class BoolOpt(Opt):
@@ -1012,6 +1011,13 @@ class MultiStrOpt(MultiOpt):
         super(MultiStrOpt, self).__init__(name,
                                           item_type=types.MultiString(),
                                           **kwargs)
+
+
+class MultiImportStrOpt(MultiOpt):
+    def __init__(self, name, **kwargs):
+        super(MultiImportStrOpt, self).__init__(name,
+                                                item_type=types.MultiImportString(),
+                                                **kwargs)
 
 
 class SubCommandOpt(Opt):
