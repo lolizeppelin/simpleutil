@@ -4,8 +4,36 @@ import socket
 import contextlib
 import pwd
 import grp
-
 import logging
+
+
+def user_exist(user):
+    if isinstance(user, (int, long)):
+        func = pwd.getpwuid
+    elif isinstance(user, basestring):
+        func = grp.getpwnam
+    else:
+        raise TypeError('group type error')
+    try:
+        func(user)
+    except KeyError:
+        return False
+    return True
+
+
+def group_exist(group):
+    if isinstance(group, (int, long)):
+        func = grp.getgrgid
+    elif isinstance(group, basestring):
+
+        func = grp.getgrnam
+    else:
+        raise TypeError('group type error')
+    try:
+        func(group)
+    except KeyError:
+        return False
+    return True
 
 
 def setuid(user_id_or_name):
