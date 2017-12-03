@@ -256,16 +256,21 @@ def _validate_ports_range_list(value):
     return ports_range_list
 
 
-
-
 def _validate_folder_path(value):
     if not isinstance(value, basestring):
         raise ValueError('folder path value not basestring')
-    if not os.path.exists(value) or not os.path.isdir(value):
-        raise ValueError('%s not exist or not a path of folder' % value)
+    partion_path = value
+    if not os.path.exists(value):
+        up = os.path.split(value)[0]
+        if not os.path.exists(up):
+            raise ValueError('%s not exist' % up)
+        partion_path = up
+    elif not os.path.isdir(value):
+        raise ValueError('%s not a path of folder' % value)
     if os.path.abspath(value) != value:
+        print value
         raise ValueError('Path value must be abspath')
-    free_bytes_of_partion = systemutils.get_partion_free_bytes(value)
+    free_bytes_of_partion = systemutils.get_partion_free_bytes(partion_path)
     if free_bytes_of_partion < 104857600:
         raise ValueError('%s free space less then 100 MB')
     if value != '/' and value.endswith('/') :
