@@ -186,6 +186,9 @@ class Semaphores(object):
         """Returns how many semaphores exist at the current time."""
         return len(self._semaphores)
 
+    def locked(self):
+        return set(self._semaphores.keys())
+
 
 class LockStack(object):
     """Simple lock stack to get and release many locks.
