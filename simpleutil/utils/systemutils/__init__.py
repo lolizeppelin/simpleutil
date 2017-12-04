@@ -27,6 +27,7 @@ INTERVAL = 0.01
 
 TIMEOUT = object()
 
+PID = 0
 
 class ExitBySIG(Exception):
     """"""

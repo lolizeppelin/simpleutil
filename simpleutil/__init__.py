@@ -150,4 +150,5 @@ if not hasattr(functools, 'total_ordering'):
 
     setattr(functools, 'total_ordering', total_ordering)
 
-warnings.filterwarnings("ignore",category=DeprecationWarning)
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
