@@ -8,8 +8,6 @@ from simpleutil.utils.systemutils.posix.inotify import event
 from simpleutil.automaton import machines
 from simpleutil.automaton import runners
 
-hub = eventlet.hubs.get_hub()
-
 TIMEOUT = object()
 MODIFY = object()
 
@@ -185,6 +183,7 @@ class TailWithF(object):
             return OK
         else:
             self.callback = eventlet.getcurrent().switch
+            hub = eventlet.hubs.get_hub()
             timer = hub.schedule_call_global(self.interval, self.callback, TIMEOUT)
             if hub.switch() is not TIMEOUT:
                 timer.cancel()

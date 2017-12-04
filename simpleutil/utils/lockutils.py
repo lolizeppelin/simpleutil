@@ -10,8 +10,6 @@ import eventlet
 import eventlet.hubs
 from eventlet.semaphore import Semaphore
 
-hub = eventlet.hubs.get_hub()
-
 
 class DummyLock(object):
 
@@ -122,7 +120,8 @@ class PriorityLock(DummyLock):
         self.locked = False
         if self._waiters:
             waiter = heapq.heappop(self._waiters)
-            hub.schedule_call_global(0, waiter.greenlet.switch)
+            # hub.schedule_call_global(0, waiter.greenlet.switch)
+            waiter.greenlet.switch()
 
     def acquire(self):
         """Alloc a lock with default priority"""
@@ -138,6 +137,7 @@ class PriorityLock(DummyLock):
         if self.locked:
             waiter = PriorityGreenlet(priority, current_thread)
             heapq.heappush(self._waiters, waiter)
+            hub = eventlet.hubs.get_hub()
             hub.switch()
         self.locked = True
 
@@ -338,6 +338,7 @@ class ReaderWriterLock(object):
             me = eventlet.getcurrent()
             last = self._waiters.popleft()
             if last is not me:
+                hub = eventlet.hubs.get_hub()
                 hub.schedule_call_global(0, last.switch)
                 avoid_making_same_scheduled_time()
 
