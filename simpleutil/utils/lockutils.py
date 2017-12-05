@@ -94,6 +94,9 @@ class PriorityGreenlet(object):
         #     return id(self.greenlet) < id(other.greenlet)
         return self.priority < other.priority
 
+    def switch(self):
+        self.greenlet.switch()
+
 
 class PriorityLock(DummyLock):
     """lock with priority
