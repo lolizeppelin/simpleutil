@@ -117,11 +117,17 @@ class PriorityLock(DummyLock):
         self.default_priority = priority
 
     def release(self):
+        if self._waiters:
+            hub = eventlet.hubs.get_hub()
+            hub.schedule_call_global(0, self._safe_release)
+        else:
+            self.locked = False
+
+    def _safe_release(self):
         self.locked = False
         if self._waiters:
             waiter = heapq.heappop(self._waiters)
-            # hub.schedule_call_global(0, waiter.greenlet.switch)
-            waiter.greenlet.switch()
+            waiter.switch()
 
     def acquire(self):
         """Alloc a lock with default priority"""
@@ -139,6 +145,8 @@ class PriorityLock(DummyLock):
             heapq.heappush(self._waiters, waiter)
             hub = eventlet.hubs.get_hub()
             hub.switch()
+        if self.locked:
+            raise RuntimeError('PriorityLock still locked!!!')
         self.locked = True
 
     @contextlib.contextmanager
