@@ -2035,6 +2035,13 @@ class ConfigOpts(collections.Mapping):
         opt_info = self._get_opt_info(name, group)
         opt_info.pop('default', None)
 
+    def find_group(self, name):
+        if not isinstance(name, basestring):
+            raise TypeError('Name is not basestring')
+        if name not in self._groups:
+            raise NoSuchGroupError(name)
+        return self._groups[name]
+
     def _all_opt_infos(self):
         """A generator function for iteration opt infos."""
         for info in self._opts.values():
