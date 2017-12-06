@@ -195,7 +195,7 @@ elif WINDOWS:
                 if os.path.isfile(exclude):
                     rootsize -= os.path.getsize(exclude)
                 else:
-                    folder = fso.GetFolder()
+                    folder = fso.GetFolder(exclude)
                     rootsize -= folder.Size
         return rootsize
 
