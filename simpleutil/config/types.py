@@ -730,7 +730,7 @@ class HostnameOrIP(ConfigType):
 
 class ImportString(String):
 
-    modregx = re.compile('^[a-zA-Z_]+$')
+    modregx = re.compile('^[a-zA-Z][a-zA-Z0-9_]+$')
 
     @staticmethod
     def check(value):
