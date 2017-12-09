@@ -2,6 +2,7 @@ __version__ = '1.0.0'
 VERSION = tuple(map(int, __version__.split('.')))
 
 import logging
+import logging
 import warnings
 import functools
 import eventlet
@@ -117,6 +118,29 @@ if not hasattr(logging, 'captureWarnings'):
                 logging._warnings_showwarning = None
 
     setattr(logging, 'captureWarnings', captureWarnings)
+
+
+if not hasattr(logging.Logger, 'isEnabledFor'):
+
+    def isEnabledFor(self, level):
+        """
+        Is this logger enabled for level 'level'?
+        """
+        if self.manager.disable >= level:
+            return 0
+        return level >= self.getEffectiveLevel()
+
+    setattr(logging.Logger, 'isEnabledFor', isEnabledFor)
+
+if not hasattr(logging.LoggerAdapter, 'isEnabledFor'):
+
+    def isEnabledFor(self, level):
+        """
+        See if the underlying logger is enabled for the specified level.
+        """
+        return self.logger.isEnabledFor(level)
+
+    setattr(logging.LoggerAdapter, 'isEnabledFor', isEnabledFor)
 
 
 if not hasattr(functools, 'total_ordering'):
