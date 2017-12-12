@@ -71,10 +71,9 @@ class ZipCompress(ImplCompress):
 
     def compress(self, outputobj, exclude=None):
         """"""
-        worker = ZipFile(file=outputobj, compression=ZIP_DEFLATED,
-                         mode='w')
-        cut = len(self.root)
+        worker = ZipFile(file=outputobj, compression=ZIP_DEFLATED, mode='w')
         if os.path.isdir(self.src):
+            cut = len(self.root) + 1
             worker.write(filename=self.src, arcname=self.target)
             for root, dirs, files in os.walk(self.src):
                 if self.canceled:
