@@ -5,6 +5,14 @@ import contextlib
 import pwd
 import grp
 import logging
+import subprocess
+
+from simpleutil.utils.systemutils import public
+
+USERADD = public.find_executable('useradd')
+USERDEL = public.find_executable('userdel')
+GROUPADD = public.find_executable('groupadd')
+GROUPDEL = public.find_executable('groupdel')
 
 
 def user_exist(user):
@@ -36,6 +44,78 @@ def group_exist(group):
     return True
 
 
+@contextlib.contextmanager
+def prepare_group(group):
+    if not isinstance(group, basestring):
+        raise TypeError('group must be basestring')
+    try:
+        _group = grp.getgrnam(group)
+    except KeyError:
+        _group = None
+
+    if not _group:
+        with open(os.devnull, 'wb') as f:
+            args = [GROUPADD, group]
+            sub = subprocess.Popen(executable=GROUPADD, args=args, stderr=f.fileno(), stdout=f.fileno())
+            public.subwait(sub)
+            _group = grp.getgrnam(group)
+    else:
+        _group = None
+
+    try:
+        yield
+    except:
+        if _group and _group.gr_gid > 0:
+            args = [GROUPDEL, _group.gr_name]
+            try:
+                with open(os.devnull, 'wb') as f:
+                    sub = subprocess.Popen(executable=GROUPDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
+                    public.subwait(sub)
+            except:
+                logging.critical('Remove group %s fail' % _group.gr_name)
+        raise
+
+
+@contextlib.contextmanager
+def prepare_user(user, group, home=None):
+    if not isinstance(user, basestring):
+        raise TypeError('user or group must be basestring')
+    if home:
+        if not isinstance(home, basestring):
+            raise TypeError('home must be basesting')
+        if home == '/':
+            raise TypeError('home is root path')
+    try:
+        _user = pwd.getpwnam(user)
+    except KeyError:
+        _user = None
+
+    if _user and _user.pw_uid > 0:
+        raise ValueError('User exist, not root')
+
+    with prepare_group(group):
+        if not _user:
+            with open(os.devnull, 'wb') as f:
+                args = [USERADD, '-M', '-N', '-g', group, '-d', home]
+                sub = subprocess.Popen(executable=USERADD, args=args, stderr=f.fileno(), stdout=f.fileno())
+                public.subwait(sub)
+                _user = pwd.getpwnam(user)
+        else:
+            _user = None
+        try:
+            yield
+        except:
+            if _user and _user.pw_uid > 0:
+                args = [USERDEL, _user.pw_name]
+                try:
+                    with open(os.devnull, 'wb') as f:
+                        sub = subprocess.Popen(executable=GROUPDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
+                        public.subwait(sub)
+                except:
+                    logging.critical('Remove group %s fail' % _user.pw_name)
+            raise
+
+
 def setuid(user_id_or_name):
     try:
         new_uid = int(user_id_or_name)
@@ -62,6 +142,33 @@ def setgid(group_id_or_name):
             msg = 'Failed to set gid %s' % new_gid
             logging.critical(msg)
             raise
+
+@contextlib.contextmanager
+def umask(umask=022):
+    default = os.umask(umask)
+    try:
+        yield umask
+    finally:
+        os.umask(default)
+
+
+def chmod(path, mask):
+    if os.path.isdir(path):
+        os.chmod(path, 777-mask)
+    else:
+        os.chmod(path, 666-mask)
+
+
+def chown(path, user, group):
+    try:
+        uid = int(user)
+    except (TypeError, ValueError):
+        uid = pwd.getpwnam(user).pw_uid
+    try:
+        gid = int(group)
+    except (TypeError, ValueError):
+        gid = grp.getgrnam(group).gr_gid
+    os.chown(path, uid, gid)
 
 
 def drop_privileges(user=None, group=None):
