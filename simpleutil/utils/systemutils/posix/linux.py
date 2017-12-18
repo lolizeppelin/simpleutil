@@ -96,7 +96,7 @@ def prepare_user(user, group, home=None):
     with prepare_group(group):
         if not _user:
             with open(os.devnull, 'wb') as f:
-                args = [USERADD, '-M', '-N', '-g', group, '-d', home]
+                args = [USERADD, '-M', '-N', '-g', group, '-d', home, user]
                 sub = subprocess.Popen(executable=USERADD, args=args, stderr=f.fileno(), stdout=f.fileno())
                 public.subwait(sub)
                 _user = pwd.getpwnam(user)
@@ -109,10 +109,10 @@ def prepare_user(user, group, home=None):
                 args = [USERDEL, _user.pw_name]
                 try:
                     with open(os.devnull, 'wb') as f:
-                        sub = subprocess.Popen(executable=GROUPDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
+                        sub = subprocess.Popen(executable=USERDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
                         public.subwait(sub)
                 except:
-                    logging.critical('Remove group %s fail' % _user.pw_name)
+                    logging.critical('Remove user %s fail' % _user.pw_name)
             raise
 
 
