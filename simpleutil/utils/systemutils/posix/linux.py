@@ -154,9 +154,9 @@ def umask(umask=022):
 
 def chmod(path, mask):
     if os.path.isdir(path):
-        os.chmod(path, 777-mask)
+        os.chmod(path, 0777-mask)
     else:
-        os.chmod(path, 666-mask)
+        os.chmod(path, 0666-mask)
 
 
 def chown(path, user, group):
