@@ -18,6 +18,14 @@ BSD = FREEBSD or OPENBSD or NETBSD
 SUNOS = sys.platform.startswith("sunos") or sys.platform.startswith("solaris")
 AIX = sys.platform.startswith('aix')
 
+
+try:
+    import resource
+    MAXFD = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+except:
+    MAXFD = 256
+
+
 INTERVAL = 0.01
 
 
