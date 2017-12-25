@@ -96,7 +96,8 @@ def prepare_user(user, group, home=None):
     with prepare_group(group):
         if not _user:
             with open(os.devnull, 'wb') as f:
-                args = [USERADD, '-M', '-N', '-g', group, '-d', home, user]
+                args = [USERADD, '-M', '-N', '-s', '/sbin/nologin',
+                        '-g', group, '-d', home, user]
                 sub = subprocess.Popen(executable=USERADD, args=args, stderr=f.fileno(), stdout=f.fileno())
                 public.subwait(sub)
                 _user = pwd.getpwnam(user)
