@@ -117,6 +117,40 @@ def prepare_user(user, group, home=None):
             raise
 
 
+def drop_user(user):
+    if not isinstance(user, basestring):
+        raise TypeError('user or group must be basestring')
+    try:
+        _user = pwd.getpwnam(user)
+    except KeyError:
+        return
+    if _user.pw_uid > 0:
+        args = [USERDEL, _user.pw_name]
+        try:
+            with open(os.devnull, 'wb') as f:
+                sub = subprocess.Popen(executable=USERDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
+                public.subwait(sub)
+        except:
+            logging.critical('Remove user %s fail' % _user.pw_name)
+
+
+def drop_group(group):
+    if not isinstance(group, basestring):
+        raise TypeError('group must be basestring')
+    try:
+        _group = grp.getgrnam(group)
+    except KeyError:
+        return
+    if _group.gr_gid > 0:
+        args = [GROUPDEL, _group.gr_name]
+        try:
+            with open(os.devnull, 'wb') as f:
+                sub = subprocess.Popen(executable=GROUPDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
+                public.subwait(sub)
+        except:
+            logging.critical('Remove group %s fail' % _group.gr_name)
+
+
 def setuid(user_id_or_name):
     try:
         new_uid = int(user_id_or_name)
@@ -143,6 +177,7 @@ def setgid(group_id_or_name):
             msg = 'Failed to set gid %s' % new_gid
             logging.critical(msg)
             raise
+
 
 @contextlib.contextmanager
 def umask(umask=022):

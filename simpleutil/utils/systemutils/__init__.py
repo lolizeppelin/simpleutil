@@ -18,11 +18,15 @@ if POSIX:
         from simpleutil.utils.systemutils.posix.linux import umask
         from simpleutil.utils.systemutils.posix.linux import chmod
         from simpleutil.utils.systemutils.posix.linux import chown
+        from simpleutil.utils.systemutils.posix.linux import drop_user
+        from simpleutil.utils.systemutils.posix.linux import drop_group
         from simpleutil.utils.systemutils.posix.linux import prepare_user
     else:
         umask = empty_context
         chmod = empty
         chown = empty
+        drop_user = empty
+        drop_group = empty
         prepare_user = empty_context
 
     def get_partion_free_bytes(folder):
@@ -75,6 +79,8 @@ elif WINDOWS:
     umask = empty_context
     chmod = empty
     chown = empty
+    drop_user = empty
+    drop_group = empty
     prepare_user = empty_context
 
     def get_partion_free_bytes(folder):
