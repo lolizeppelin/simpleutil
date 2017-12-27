@@ -23,7 +23,7 @@ def async_extract(src, dst, exclude=None,
     if not os.path.isdir(dst):
         raise RuntimeError('Destination is not folder')
     extracter = Extract(src, native)
-    extracter.extractall(dst, exclude, timeout, fork)
+    return extracter.extractall(dst, exclude, timeout, fork)
 
 
 def async_compress(src, dst, exclude=None,
@@ -55,7 +55,11 @@ def async_compress(src, dst, exclude=None,
             worker.wait(timeout)
             os._exit(0)
         else:
-            posix.wait(pid)
+            def waiter():
+                posix.wait(pid)
+            return waiter
     else:
         worker.compress(exclude)
-        worker.wait(timeout)
+        def waiter():
+            worker.wait(timeout)
+        return waiter

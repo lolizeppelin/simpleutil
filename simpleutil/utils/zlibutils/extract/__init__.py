@@ -178,7 +178,11 @@ class Extract(object):
                 self.adapter.extractall(dst)
                 os._exit(0)
             else:
-                posix.wait(timeout)
+                def waiter():
+                    posix.wait(pid, timeout)
+                return waiter
         else:
             self.adapter.extractall(dst, exclude)
-            self.adapter.wait(timeout)
+            def waiter():
+                self.adapter.wait(timeout)
+            return waiter
