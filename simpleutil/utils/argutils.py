@@ -1,5 +1,8 @@
 # -*- coding: UTF-8 -*-
+import re
 from simpleutil.common.exceptions import InvalidArgument
+
+regx = re.compile('^([0-9]+?)-([0-9]+?)$')
 
 
 def map_with(ids, func):
@@ -21,7 +24,32 @@ def map_with(ids, func):
 
 
 def map_to_int(ids):
-    return map_with(ids, int)
+    if isinstance(ids, basestring):
+        ids_list = ids.split(',')
+    elif isinstance(ids, (list, tuple, set, frozenset)):
+        ids_list = ids
+    elif isinstance(ids, (int, long)):
+        ids_list = [ids, ]
+    else:
+        raise InvalidArgument('id can not be formated from %s' % ids.__class__.__name__)
+    _ids = set()
+    for value in ids_list:
+        if isinstance(value, (int, long)):
+            _ids.add(value)
+        if isinstance(value, basestring):
+            if value.isdigit():
+                _ids.add(int(value))
+                continue
+            match = re.match(regx, value)
+            if match:
+                down, up = int(match.group(1)), int(match.group(2))
+                if down > up:
+                    raise InvalidArgument('down value big thne up value')
+                for i in xrange(down, up+1):
+                    _ids.add(i)
+            else:
+                raise InvalidArgument('%s can not format to int' % str(value))
+    return _ids
 
 
 class Idformater(object):
