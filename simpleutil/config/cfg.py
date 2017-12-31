@@ -789,8 +789,8 @@ class IntOpt(Opt):
        Added *min* and *max* parameters.
     """
 
-    def __init__(self, name, min=None, max=None, **kwargs):
-        super(IntOpt, self).__init__(name, type=types.Integer(min, max),
+    def __init__(self, name, min=None, max=None, choices=None, **kwargs):
+        super(IntOpt, self).__init__(name, type=types.Integer(min, max, choices=choices),
                                      **kwargs)
 
 
