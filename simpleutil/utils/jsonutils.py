@@ -273,9 +273,8 @@ if not hasattr(_format, 'is_datetime'):
         func = _format.FormatChecker.cls_checks('date-time', (ValueError, ))(is_datetime)
         setattr(_format, 'is_datetime', func)
 
-# add formater uuid  md5 crc32
+# add formater uuid  md5
 MD5LIKE = re.compile('^[a-f0-9]{32}$')
-CRC32LIKE = re.compile('^[a-z0-9]{8,33}$')
 
 def is_md5_like(var):
     if re.match(MD5LIKE, var):
@@ -286,20 +285,14 @@ def is_md5_like(var):
         return True
     return False
 
-def is_crc32_like(var):
-    return re.match(CRC32LIKE, var) is not None
-
 for _draft_name, _draft in six.iteritems(_format._draft_checkers):
     _format._draft_checkers[_draft_name].append('uuid')
     _format._draft_checkers[_draft_name].append('md5')
-    _format._draft_checkers[_draft_name].append('crc32')
 
 func = _format.FormatChecker.cls_checks('uuid', (ValueError, ))(is_uuid_like)
 setattr(_format, 'is_uuid', func)
 func = _format.FormatChecker.cls_checks('md5', (ValueError, ))(is_md5_like)
 setattr(_format, 'is_md5', func)
-func = _format.FormatChecker.cls_checks('crc32', (ValueError, ))(is_crc32_like)
-setattr(_format, 'is_crc32', func)
 
 FormatChecker = jsonschema.FormatChecker()
 
