@@ -175,7 +175,9 @@ class Extract(object):
             from simpleutil.utils.systemutils import posix
             pid = fork()
             if pid == 0:
+                os.closerange(3, systemutils.MAXFD)
                 self.adapter.extractall(dst)
+                self.adapter.wait(timeout)
                 os._exit(0)
             else:
                 def waiter():

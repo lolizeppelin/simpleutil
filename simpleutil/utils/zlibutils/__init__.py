@@ -51,6 +51,7 @@ def async_compress(src, dst, exclude=None,
         from simpleutil.utils.systemutils import posix
         pid = fork()
         if pid == 0:
+            os.closerange(3, systemutils.MAXFD)
             worker.compress(exclude)
             worker.wait(timeout)
             os._exit(0)
