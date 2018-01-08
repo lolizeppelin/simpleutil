@@ -12,11 +12,12 @@ BLOCK = 4096
 def openfile(path):
     if not os.path.exists(path) or not os.access(path, os.R_OK):
         raise exceptions.InvalidArgument('file not exist or can not be read')
-    f = open(path, 'rb')
-    try:
+    with open(path, 'rb') as f:
         yield f
-    finally:
-        f.close()
+    # try:
+    #     yield f
+    # finally:
+    #     f.close()
 
 
 def filemd5(path):
