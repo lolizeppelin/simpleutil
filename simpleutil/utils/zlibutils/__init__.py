@@ -63,7 +63,10 @@ def async_compress(src, dst, exclude=None,
                 posix.wait(pid)
 
             def stop():
-                os.kill(pid, signal.SIGTERM)
+                try:
+                    os.kill(pid, signal.SIGTERM)
+                except OSError:
+                    pass
 
             return Waiter(wait=wait, stop=stop)
     else:

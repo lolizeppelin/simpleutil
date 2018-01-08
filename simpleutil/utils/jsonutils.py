@@ -179,7 +179,10 @@ def safe_loads_as_bytes(var, encoding='utf-8'):
 
 
 def dumps(obj, default=to_primitive, **kwargs):
-    return json.dumps(obj, default=default, **kwargs)
+    serialized = json.dumps(obj, default=default, **kwargs)
+    if isinstance(serialized, six.binary_type):
+        serialized = serialized.decode(kwargs.get('encoding', 'utf-8'))
+    return serialized
 
 
 def dumps_as_bytes(obj, default=to_primitive, encoding='utf-8', **kwargs):

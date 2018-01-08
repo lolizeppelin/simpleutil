@@ -197,7 +197,10 @@ class Extract(object):
                     posix.wait(pid, timeout)
 
                 def stop():
-                    os.kill(pid, signal.SIGTERM)
+                    try:
+                        os.kill(pid, signal.SIGTERM)
+                    except OSError:
+                        pass
 
                 return Waiter(wait=wait, stop=stop)
         else:
