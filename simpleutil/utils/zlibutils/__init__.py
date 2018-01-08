@@ -1,10 +1,13 @@
 # -*- coding: UTF-8 -*-
 """异步压缩解压方法"""
 import os
+import signal
 from simpleutil.utils import systemutils
+from simpleutil.utils.zlibutils.waiter import Waiter
 from simpleutil.utils.zlibutils.extract import Extract
 from simpleutil.utils.zlibutils.compress import FileRecver
 from simpleutil.utils.zlibutils.compress import ZlibStream
+
 
 def async_extract(src, dst, exclude=None,
                   native=False,
@@ -56,11 +59,19 @@ def async_compress(src, dst, exclude=None,
             worker.wait(timeout)
             os._exit(0)
         else:
-            def waiter():
+            def wait():
                 posix.wait(pid)
-            return waiter
+
+            def stop():
+                os.kill(pid, signal.SIGTERM)
+
+            return Waiter(wait=wait, stop=stop)
     else:
         worker.compress(exclude)
-        def waiter():
+
+        def wait():
             worker.wait(timeout)
-        return waiter
+
+        return Waiter(wait=wait, stop=worker.cancel)
+
+

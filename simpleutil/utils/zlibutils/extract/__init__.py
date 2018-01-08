@@ -4,9 +4,11 @@ import six
 import tarfile
 import zipfile
 import subprocess
+import signal
 
 from simpleutil.utils import systemutils
 from simpleutil.utils import futurist
+from simpleutil.utils.zlibutils.waiter import Waiter
 
 UNZIP = systemutils.find_executable('unzip')
 TAR = systemutils.find_executable('tar')
@@ -70,8 +72,11 @@ class Adapter(object):
 
     @abc.abstractmethod
     def wait(self, timeout=None):
-        """"""
+        """wait extract"""
 
+    @abc.abstractmethod
+    def stop(self):
+        """stop extract"""
 
 class ShellAdapter(Adapter):
 
@@ -122,6 +127,10 @@ class ShellAdapter(Adapter):
         else:
             raise RuntimeError('BinAdapter not started')
 
+    def stop(self):
+        if self.sub:
+            self.sub.terminate()
+
 
 class NativeAdapter(Adapter):
 
@@ -139,6 +148,10 @@ class NativeAdapter(Adapter):
 
     def wait(self, timeout=None):
         self.ft.result(timeout=timeout)
+
+    def stop(self):
+        if self.ft:
+            self.ft.cancel()
 
 
 class Extract(object):
@@ -180,11 +193,17 @@ class Extract(object):
                 self.adapter.wait(timeout)
                 os._exit(0)
             else:
-                def waiter():
+                def wait():
                     posix.wait(pid, timeout)
-                return waiter
+
+                def stop():
+                    os.kill(pid, signal.SIGTERM)
+
+                return Waiter(wait=wait, stop=stop)
         else:
             self.adapter.extractall(dst, exclude)
-            def waiter():
+
+            def wait():
                 self.adapter.wait(timeout)
-            return waiter
+
+            return Waiter(wait=wait, stop=self.adapter.stop)
