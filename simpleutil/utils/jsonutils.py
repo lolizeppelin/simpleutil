@@ -20,8 +20,8 @@ except:
     import xmlrpclib as xmlrpclib
 
 from simpleutil.utils import encodeutils
+from simpleutil.utils import attributes
 from simpleutil.utils.timeutils import PERFECT_TIME_FORMAT
-from simpleutil.utils.uuidutils import is_uuid_like
 
 
 # Special jsonschema validation types/adjustments.
@@ -276,25 +276,14 @@ if not hasattr(_format, 'is_datetime'):
         func = _format.FormatChecker.cls_checks('date-time', (ValueError, ))(is_datetime)
         setattr(_format, 'is_datetime', func)
 
-# add formater uuid  md5
-MD5LIKE = re.compile('^[a-f0-9]{32}$')
-
-def is_md5_like(var):
-    if re.match(MD5LIKE, var):
-        try:
-            int(var, 16)
-        except ValueError:
-            return False
-        return True
-    return False
 
 for _draft_name, _draft in six.iteritems(_format._draft_checkers):
     _format._draft_checkers[_draft_name].append('uuid')
     _format._draft_checkers[_draft_name].append('md5')
 
-func = _format.FormatChecker.cls_checks('uuid', (ValueError, ))(is_uuid_like)
+func = _format.FormatChecker.cls_checks('uuid', (ValueError,))(attributes.is_uuid_like)
 setattr(_format, 'is_uuid', func)
-func = _format.FormatChecker.cls_checks('md5', (ValueError, ))(is_md5_like)
+func = _format.FormatChecker.cls_checks('md5', (ValueError,))(attributes.is_md5_like)
 setattr(_format, 'is_md5', func)
 
 FormatChecker = jsonschema.FormatChecker()

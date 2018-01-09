@@ -12,26 +12,16 @@
 #    WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 #    License for the specific language governing permissions and limitations
 #    under the License.
-
 import functools
 import re
 import os
 import six
 
 import netaddr
-# from simpleutil.log import log as logging
-from simpleutil.utils import uuidutils
 from simpleutil.utils import systemutils
 
-# import webob.exc
-
-# from neutron._i18n import _
-# from neutron.common import constants
-# from neutron.common import exceptions as n_exc
 from simpleutil.common import exceptions as n_exc
 
-
-# LOG = logging.getLogger(__name__)
 
 ATTR_NOT_SPECIFIED = object()
 # Defining a constant to avoid repeating string literal in several modules
@@ -48,6 +38,35 @@ SHARED = 'shared'
 # DEVICE_OWNER_MAX_LEN = 255
 
 
+HEX_ELEM = '[0-9A-Fa-f]'
+# UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
+#                          HEX_ELEM + '{4}', HEX_ELEM + '{4}',
+#                          HEX_ELEM + '{12}'])
+# Note: In order to ensure that the MAC address is unicast the first byte
+# must be even.
+MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
+
+# add formater uuid  md5
+MD5_PATTERN = re.compile('^[a-f0-9]{32}$')
+UUID_PATTERN = re.compile('^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}?$')
+
+
+def is_md5_like(var):
+    if re.match(MD5_PATTERN, var):
+        try:
+            int(var, 16)
+        except ValueError:
+            return False
+        return True
+    return False
+
+
+def is_uuid_like(var):
+    if re.match(UUID_PATTERN, var):
+        return True
+    return False
+
+
 def _verify_dict_keys(expected_keys, target_dict, strict=True):
     """Allows to verify keys in a dictionary.
 
@@ -58,7 +77,7 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
     """
     if not isinstance(target_dict, dict):
         msg = ("Invalid input. '%(target_dict)s' must be a dictionary "
-                 "with keys: %(expected_keys)s" %
+               "with keys: %(expected_keys)s" %
                {'target_dict': target_dict, 'expected_keys': expected_keys})
         # LOG.debug(msg)
         return msg
@@ -69,12 +88,10 @@ def _verify_dict_keys(expected_keys, target_dict, strict=True):
     predicate = expected_keys.__eq__ if strict else expected_keys.issubset
 
     if not predicate(provided_keys):
-        msg = ("Validation of dictionary's keys failed. "
-                 "Expected keys: %(expected_keys)s "
-                 "Provided keys: %(provided_keys)s" %
-               {'expected_keys': expected_keys,
-                'provided_keys': provided_keys})
-        # LOG.debug(msg)
+        msg = "Validation of dictionary's keys failed. " \
+              "Expected keys: %(expected_keys)s " \
+              "Provided keys: %(provided_keys)s" % \
+              {'expected_keys': expected_keys, 'provided_keys': provided_keys}
         return msg
 
 
@@ -328,7 +345,7 @@ def _validate_regex(data, valid_values=None):
 
 
 def _validate_uuid(data, valid_values=None):
-    if not uuidutils.is_uuid_like(data):
+    if not is_uuid_like(data):
         msg = "'%s' is not a valid UUID" % data
         # LOG.debug(msg)
         return msg
@@ -511,14 +528,6 @@ def convert_to_list(data):
     else:
         return [data]
 
-
-HEX_ELEM = '[0-9A-Fa-f]'
-UUID_PATTERN = '-'.join([HEX_ELEM + '{8}', HEX_ELEM + '{4}',
-                         HEX_ELEM + '{4}', HEX_ELEM + '{4}',
-                         HEX_ELEM + '{12}'])
-# Note: In order to ensure that the MAC address is unicast the first byte
-# must be even.
-MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 
 # Dictionary that maintains a list of validation functions
 validators = {'type:dict': _validate_dict,
