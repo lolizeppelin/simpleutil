@@ -1,7 +1,7 @@
 import sys
 from simpleutil.utils import systemutils
 
-if not systemutils.LINUX or not systemutils.BSD:
+if not systemutils.LINUX:
     raise RuntimeError('system type error')
 
 if sys.version_info < (2, 4):
