@@ -122,7 +122,7 @@ class TailWithF(object):
 
     def __init__(self, path,
                  output, pause=None,
-                 rows=20):
+                 rows=20, logger=None):
         self.path = path
         self.file = open(path, 'r')
         self.inotifer = inotify.Notifier(path)
@@ -135,6 +135,7 @@ class TailWithF(object):
         self.buffer = ''
         self.runner = None
         self.callback = None
+        self.logger = logger
 
     def _automaton(self):
         if self.runner is None:
@@ -171,7 +172,9 @@ class TailWithF(object):
         if self.modify:
             try:
                 self.buffer = self.file.read(BLOCK)
-            except (OSError, IOError):
+            except (OSError, IOError) as e:
+                if self.logger:
+                    self.logger('%s %s' % (e.__class__.__name__, str(e)))
                 return NOT_OK
             pos = self.file.tell()
             last_post = os.path.getsize(self.path)
@@ -195,7 +198,9 @@ class TailWithF(object):
             try:
                 self.output(self.buffer.replace('\r', ''))
                 self.buffer = ''
-            except:
+            except Exception as e:
+                if self.logger:
+                    self.logger('%s %s' % (e.__class__.__name__, str(e)))
                 return NOT_OK
         return OK
 
@@ -203,7 +208,9 @@ class TailWithF(object):
         try:
             if self.pause:
                 self.pause()
-        except:
+        except Exception as e:
+            if self.logger:
+                self.logger('%s %s' % (e.__class__.__name__, str(e)))
             return NOT_OK
         return OK
 
