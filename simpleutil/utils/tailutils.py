@@ -187,7 +187,7 @@ class TailWithF(object):
             timer = hub.schedule_call_global(self.interval, self.callback, TIMEOUT)
             if hub.switch() is not TIMEOUT:
                 timer.cancel()
-            self.callback = None
+                # self.callback = None
         return OK
 
     def output_func(self):
@@ -236,7 +236,10 @@ class TailWithF(object):
             if not self.modify:
                 self.modify = True
                 if self.callback:
-                    hub.schedule_call_global(0, self.callback, MODIFY)
+                    cb = self.callback
+                    self.callback = None
+                    hub = eventlet.hubs.get_hub()
+                    hub.schedule_call_global(0, cb, MODIFY)
 
     def start(self, threadpool):
         if self._stoped:
@@ -252,6 +255,13 @@ class TailWithF(object):
             self.runner.shutoff()
             eventlet.sleep(self.inotifer.interval)
             if self.callback:
-                hub.schedule_call_global(0, self.callback, MODIFY)
+                cb = self.callback
+                self.callback = None
+                hub = eventlet.hubs.get_hub()
+                hub.schedule_call_global(0, cb, MODIFY)
             self.inotifer.close()
             self.file.close()
+
+    @property
+    def stoped(self):
+        return self._stoped
