@@ -1,4 +1,5 @@
 import os
+import time
 import eventlet
 import eventlet.hubs
 
@@ -167,6 +168,8 @@ class TailWithF(object):
             m.add_reaction(FINISHING, NOT_OK, self.close_func)
 
             self.runner = runners.FiniteRunner(m, detail=False)
+            if self.logger:
+                self.logger('automaton started')
 
     def prepare_func(self):
         if self.modify:
@@ -185,12 +188,14 @@ class TailWithF(object):
                 return NOT_OK
             return OK
         else:
-            self.callback = eventlet.getcurrent().switch
+            me = eventlet.getcurrent()
+            cb = me.switch
+            self.callback = cb
             hub = eventlet.hubs.get_hub()
-            timer = hub.schedule_call_global(self.interval, self.callback, TIMEOUT)
+            timer = hub.schedule_call_global(self.interval, cb, TIMEOUT)
             if hub.switch() is not TIMEOUT:
                 timer.cancel()
-                # self.callback = None
+                self.callback = None
         return OK
 
     def output_func(self):
@@ -225,6 +230,8 @@ class TailWithF(object):
         before = os.path.getsize(self.path)
         if before < 1:
             return OK
+        if self.logger:
+            self.logger('Start read last row %.2f' % time.time())
         reader = LastRowsN(self.file, self.rows)
         self.buffer = reader.getbuffer()
         after = os.path.getsize(self.path)
@@ -234,6 +241,8 @@ class TailWithF(object):
                 return NOT_OK
             self.modify = True
         self.file.seek(reader.max_pos)
+        if self.logger:
+            self.logger('End read last row %.2f' % time.time())
         return OK
 
     def event_notify(self, events):
