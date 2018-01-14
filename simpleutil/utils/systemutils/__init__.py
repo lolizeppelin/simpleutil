@@ -21,6 +21,7 @@ if POSIX:
         from simpleutil.utils.systemutils.posix.linux import drop_user
         from simpleutil.utils.systemutils.posix.linux import drop_group
         from simpleutil.utils.systemutils.posix.linux import prepare_user
+        from simpleutil.utils.systemutils.posix.linux import drop_privileges
     else:
         umask = empty_context
         chmod = empty
@@ -28,6 +29,7 @@ if POSIX:
         drop_user = empty
         drop_group = empty
         prepare_user = empty_context
+        drop_privileges = empty
 
     def get_partion_free_bytes(folder):
         # f_bsize: 文件系统块大小
@@ -82,6 +84,7 @@ elif WINDOWS:
     drop_user = empty
     drop_group = empty
     prepare_user = empty_context
+    drop_privileges = empty
 
     def get_partion_free_bytes(folder):
         """ Return folder/drive free space (in bytes)

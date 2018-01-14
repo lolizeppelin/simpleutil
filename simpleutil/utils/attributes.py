@@ -243,7 +243,7 @@ def _validate_ports_range(value):
         if len(ports_range) == 2:
             d_port = _validate_port(ports_range[0])
             u_port = _validate_port(ports_range[1])
-            if u_port >= d_port:
+            if u_port > d_port:
                 return value
         raise ValueError('Port range error')
     if isinstance(value, (int, long, basestring)):

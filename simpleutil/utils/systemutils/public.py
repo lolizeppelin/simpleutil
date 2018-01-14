@@ -85,7 +85,7 @@ def subwait(sub, timeout=None):
                 else:
                     code = sub.wait()
                     if code != 0:
-                        raise UnExceptExit('sup process exit code %d' % code)
+                        raise UnExceptExit('sub process exit code %d' % code)
                     break
             except OSError as exc:
                 if exc.errno not in (errno.EINTR, errno.ECHILD):
