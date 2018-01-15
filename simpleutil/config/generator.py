@@ -227,7 +227,6 @@ class _OptFormatter(object):
             if opt.deprecated_reason:
                 lines.extend(
                     self._format_help('Reason: ' + opt.deprecated_reason))
-
         if hasattr(opt.type, 'format_defaults'):
             defaults = opt.type.format_defaults(opt.default,
                                                 opt.sample_default)
@@ -423,7 +422,7 @@ def generate(conf):
 
 
 def make(cf):
-    logging.basicConfig(level=logging.WARN)
+    logging.basicConfig(level=logging.INFO)
     conf = cfg.ConfigOpts()
     register_cli_opts(conf)
     conf(default_config_files=[cf, ])

@@ -414,10 +414,13 @@ class List(ConfigType):
         self.bounds = bounds
 
     def __call__(self, value):
-        if isinstance(value, list):
-            return value
 
         result = []
+        if isinstance(value, list):
+            for v in value:
+                result.append(self.item_type(v))
+            return result
+
         s = value.strip()
 
         if self.bounds:
@@ -460,7 +463,7 @@ class List(ConfigType):
         )
 
     def _formatter(self, value):
-        return ','.join(value)
+        return ','.join(map(str, value))
 
 
 class Dict(ConfigType):
