@@ -37,5 +37,5 @@ def filecrc32(path):
         while(bytes != six.binary_type('')):
             crc = zlib.crc32(bytes, crc)
             bytes = f.read(BLOCK)
-        return str(crc)
+        return str(crc & 0xffffffff)
         # return '%x' % (crc & 0xffffffff)
