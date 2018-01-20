@@ -937,7 +937,7 @@ class UrlOpt(Opt):
     REGEX = '^https?://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]$'
 
     def __init__(self, name, choices=None, quotes=None,
-                 regex=None, ignore_case=None, max_length=None, **kwargs):
+                 ignore_case=None, max_length=None, **kwargs):
         super(UrlOpt, self).__init__(name,
                                      type=types.String(
                                          choices=choices,
