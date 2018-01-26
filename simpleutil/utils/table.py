@@ -36,8 +36,9 @@ class PleasantTable(object):
     """
 
     # Constants used when pretty formatting the table.
-    COLUMN_STARTING_CHAR = ' '
-    COLUMN_ENDING_CHAR = ''
+    COLUMN_PREFIX_CHAR = ' '
+    COLUMN_STARTING_CHAR = '|'
+    COLUMN_ENDING_CHAR = '|'
     COLUMN_SEPARATOR_CHAR = '|'
     HEADER_FOOTER_JOINING_CHAR = '+'
     HEADER_FOOTER_CHAR = '-'
@@ -64,10 +65,12 @@ class PleasantTable(object):
         except ValueError:
             return 0
 
-    def __init__(self, columns):
+    def __init__(self, ident, columns, counter=True):
         if len(columns) == 0:
             raise ValueError("Column count must be greater than zero")
         self._columns = [column.strip() for column in columns]
+        self.ident = self.COLUMN_PREFIX_CHAR * ident
+        self.counter = counter
         self._rows = []
 
     def add_row(self, row):
@@ -88,6 +91,7 @@ class PleasantTable(object):
             headers.append(self._center_text(column, column_sizes[i]))
         # Build the header and footer prefix/postfix.
         header_footer_buf = six.StringIO()
+        header_footer_buf.write(self.ident)
         header_footer_buf.write(self.HEADER_FOOTER_JOINING_CHAR)
         for i, header in enumerate(headers):
             header_footer_buf.write(self.HEADER_FOOTER_CHAR * len(header))
@@ -98,6 +102,7 @@ class PleasantTable(object):
         content_buf = six.StringIO()
         content_buf.write(header_footer_buf.getvalue())
         content_buf.write(self.LINE_SEP)
+        content_buf.write(self.ident)
         content_buf.write(self.COLUMN_STARTING_CHAR)
         for i, header in enumerate(headers):
             if i + 1 == column_count:
@@ -123,16 +128,24 @@ class PleasantTable(object):
                         pieces.append(self.COLUMN_SEPARATOR_CHAR)
                 blob = ''.join(pieces)
                 if self.COLUMN_ENDING_CHAR:
+                    content_buf.write(self.ident)
                     content_buf.write(self.COLUMN_STARTING_CHAR)
                     content_buf.write(blob)
                     content_buf.write(self.COLUMN_ENDING_CHAR)
                 else:
                     blob = blob.rstrip()
                     if blob:
+                        content_buf.write(self.ident)
                         content_buf.write(self.COLUMN_STARTING_CHAR)
                         content_buf.write(blob)
                 if i + 1 != row_count:
                     content_buf.write(self.LINE_SEP)
             content_buf.write(self.LINE_SEP)
             content_buf.write(header_footer_buf.getvalue())
+            if self.counter:
+                content_buf.write(self.LINE_SEP)
+                content_buf.write(self.ident)
+                content_buf.write(self.COLUMN_STARTING_CHAR)
+                content_buf.write(' count: %d' % len(self._rows))
+                # content_buf.write(self.LINE_SEP)
         return content_buf.getvalue()
