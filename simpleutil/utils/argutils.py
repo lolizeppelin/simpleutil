@@ -2,7 +2,8 @@
 import re
 from simpleutil.common.exceptions import InvalidArgument
 
-regx = re.compile('^([0-9]+?)-([0-9]+?)$')
+# regx = re.compile('^([0-9]+?)-([0-9]+?)$')
+regx = re.compile('^([1-9]\d*?)-([1-9]\d*?)$')
 
 
 def map_with(ids, func):
@@ -43,8 +44,12 @@ def map_to_int(ids):
             match = re.match(regx, value)
             if match:
                 down, up = int(match.group(1)), int(match.group(2))
+                if up == down:
+                    _ids.add(down)
+                    continue
                 if down > up:
-                    raise InvalidArgument('down value big thne up value')
+                    down, up = up, down
+                    # raise InvalidArgument('down value big thne up value')
                 for i in xrange(down, up+1):
                     _ids.add(i)
             else:
