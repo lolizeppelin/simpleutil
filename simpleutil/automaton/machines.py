@@ -16,7 +16,7 @@ import collections
 
 import six
 
-from simpleutil.utils import prettytable
+from simpleutil.utils import table
 from simpleutil.utils import reflection
 from simpleutil.automaton import exceptions as excp
 
@@ -406,8 +406,10 @@ class FiniteMachine(object):
         and transitions by sort order; with it being provided as false the rows
         will be iterated in addition order instead.
         """
-        tbl = prettytable.PrettyTable(["Start", "Event", "End",
-                                       "On Enter", "On Exit"])
+        # tbl = prettytable.PrettyTable(["Start", "Event", "End",
+        #                                "On Enter", "On Exit"])
+        tbl = table.PleasantTable(ident=0, columns=["Start", "Event", "End",
+                                                    "On Enter", "On Exit"], counter=False)
         for state in _orderedkeys(self._states, sort=sort):
             prefix_markings = []
             if self.current_state == state:
@@ -446,7 +448,7 @@ class FiniteMachine(object):
                 else:
                     on_exit = empty
                 tbl.add_row([pretty_state, empty, empty, on_enter, on_exit])
-        return tbl.get_string()
+        return tbl.pformat()
 
     def shutoff(self):
         self._shutoff = True
