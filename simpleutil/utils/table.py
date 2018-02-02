@@ -14,9 +14,18 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+import unicodedata
 import itertools
 import os
 import six
+
+
+def width(s):
+    """return the extra width for wide characters
+    ref: http://stackoverflow.com/a/23320535/1276501"""
+    if isinstance(s, six.binary_type):
+        s = s.decode('utf-8')
+    return len(s) + sum(unicodedata.east_asian_width(x) in ('F', 'W') for x in s)
 
 
 class PleasantTable(object):
@@ -46,8 +55,20 @@ class PleasantTable(object):
 
     @staticmethod
     def _center_text(text, max_len, fill=' '):
-        return '{0:{fill}{align}{size}}'.format(text, fill=fill,
-                                                align="^", size=max_len)
+        _size = len(text)
+        _width = width(text)
+        if _size == _width:
+            return '{0:{fill}{align}{size}}'.format(text, fill=fill,
+                                                    align="^", size=max_len)
+        else:
+            _count = (max_len - _width)
+            f_count = _count / 2
+            if _count % 2 == 0:
+                e_count = f_count
+            else:
+                e_count = f_count + 1
+            return '%s%s%s' % (f_count * ' ', text, e_count * ' ')
+
 
     @classmethod
     def _size_selector(cls, possible_sizes):
@@ -86,7 +107,7 @@ class PleasantTable(object):
         headers = []
         for i, column in enumerate(self._columns):
             possible_sizes_iter = itertools.chain(
-                [len(column)], (len(row[i]) for row in self._rows))
+                [width(column)], (width(row[i]) for row in self._rows))
             column_sizes[i] = self._size_selector(possible_sizes_iter)
             headers.append(self._center_text(column, column_sizes[i]))
         # Build the header and footer prefix/postfix.
