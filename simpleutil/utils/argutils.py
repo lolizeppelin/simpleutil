@@ -57,6 +57,25 @@ def map_to_int(ids):
     return _ids
 
 
+def unmap(ids, split='-'):
+    ids = list(set(ids))
+    ids.sort()
+    results = []
+    tmp = []
+    for index, value in enumerate(ids):
+        if index == 0:
+            tmp.append(value)
+            continue
+        if value - 1 == ids[index - 1]:
+            tmp.append(value)
+        else:
+            if len(tmp) < 2:
+                results.append(str(tmp[0]))
+            else:
+                results.append('%s%s%s' % (str(tmp[0]), split, str(tmp[-1])))
+            del tmp[:]
+
+
 class Idformater(object):
     """This Descriptor code copy from Wsgify
     This class will format server_id on kwargs
