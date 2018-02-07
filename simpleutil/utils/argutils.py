@@ -58,7 +58,12 @@ def map_to_int(ids):
 
 
 def unmap(ids, split='-'):
-    ids = list(set(ids))
+    if isinstance(ids, (list, tuple)):
+        ids = list(set(ids))
+    elif isinstance(ids, (frozenset, set)):
+        ids = list(ids)
+    else:
+        raise InvalidArgument('ids is not list set or tuple')
     ids.sort()
     results = []
     tmp = []
@@ -66,14 +71,20 @@ def unmap(ids, split='-'):
         if index == 0:
             tmp.append(value)
             continue
-        if value - 1 == ids[index - 1]:
-            tmp.append(value)
-        else:
+        if value - 1 != ids[index - 1]:
             if len(tmp) < 2:
                 results.append(str(tmp[0]))
             else:
                 results.append('%s%s%s' % (str(tmp[0]), split, str(tmp[-1])))
             del tmp[:]
+        tmp.append(value)
+    if tmp:
+        if len(tmp) < 2:
+            results.append(str(tmp[0]))
+        else:
+            results.append('%s%s%s' % (str(tmp[0]), split, str(tmp[-1])))
+        del tmp[:]
+    return results
 
 
 class Idformater(object):
