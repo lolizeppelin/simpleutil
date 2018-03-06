@@ -280,11 +280,14 @@ if not hasattr(_format, 'is_datetime'):
 for _draft_name, _draft in six.iteritems(_format._draft_checkers):
     _format._draft_checkers[_draft_name].append('uuid')
     _format._draft_checkers[_draft_name].append('md5')
+    _format._draft_checkers[_draft_name].append('crc32')
 
 func = _format.FormatChecker.cls_checks('uuid', (ValueError,))(attributes.is_uuid_like)
 setattr(_format, 'is_uuid', func)
 func = _format.FormatChecker.cls_checks('md5', (ValueError,))(attributes.is_md5_like)
 setattr(_format, 'is_md5', func)
+func = _format.FormatChecker.cls_checks('crc32', (ValueError,))(attributes.is_crc32_like)
+setattr(_format, 'is_crc32', func)
 
 FormatChecker = jsonschema.FormatChecker()
 

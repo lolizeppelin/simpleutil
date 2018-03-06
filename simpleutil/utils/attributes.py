@@ -49,6 +49,7 @@ MAC_PATTERN = "^%s[aceACE02468](:%s{2}){5}$" % (HEX_ELEM, HEX_ELEM)
 # add formater uuid  md5
 MD5_PATTERN = re.compile('^[a-f0-9]{32}$')
 UUID_PATTERN = re.compile('^[a-f\d]{8}(-[a-f\d]{4}){3}-[a-f\d]{12}?$')
+CRC32_PATTERN = re.compile('^[0-9]+?$')
 
 
 def is_md5_like(var):
@@ -63,6 +64,12 @@ def is_md5_like(var):
 
 def is_uuid_like(var):
     if re.match(UUID_PATTERN, var):
+        return True
+    return False
+
+
+def is_crc32_like(var):
+    if re.match(CRC32_PATTERN, var):
         return True
     return False
 
