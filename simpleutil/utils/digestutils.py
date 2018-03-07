@@ -27,7 +27,14 @@ def filemd5(path):
         while(bytes != six.binary_type('')):
             md5_instance.update(bytes)
             bytes = f.read(BLOCK)
-        return md5_instance.hexdigest()
+    return md5_instance.hexdigest()
+
+
+def strmd5(buffer):
+    md5_instance = hashlib.md5()
+    md5_instance.update(buffer)
+    return md5_instance.hexdigest()
+
 
 
 def filecrc32(path):
@@ -38,4 +45,3 @@ def filecrc32(path):
             crc = zlib.crc32(bytes, crc)
             bytes = f.read(BLOCK)
         return str(crc & 0xffffffff)
-        # return '%x' % (crc & 0xffffffff)
