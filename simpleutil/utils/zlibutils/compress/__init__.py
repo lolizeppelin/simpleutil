@@ -215,8 +215,8 @@ class FileCachedRecver(Recver):
 
 
 class ZlibStream(object):
-
-    def __init__(self, path, comptype, recv=None):
+    def __init__(self, path, comptype, recv=None,
+                 native=True, topdir=True):
         """
         不支持设置压缩等级,需要继承后改动函数,不确定兼容性
         zip压缩使用压缩等级8
@@ -230,7 +230,7 @@ class ZlibStream(object):
         self.recvobj = recv
         if not isinstance(self.recvobj, Recver):
             raise TypeError('Recver type error')
-        self.compper = cls(path)
+        self.compper = cls(path, native, topdir)
 
     def compress(self, exclude=None):
         if exclude:

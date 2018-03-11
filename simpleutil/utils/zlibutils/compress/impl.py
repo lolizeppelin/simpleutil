@@ -24,36 +24,56 @@ class GzFile(TarFile):
 
 @six.add_metaclass(abc.ABCMeta)
 class ImplCompress(object):
-
-    def __init__(self, path):
+    def __init__(self, path, native=True, topdir=True):
         if path.endswith('/'):
             path = path[:-1]
+        self.native = native
+        self.topdir = topdir
         self.src = os.path.abspath(path)
         self.root, self.target = os.path.split(self.src)
         # 目标对象是根目录
         if not self.target:
             raise RuntimeError('Target path is root')
 
-    @abc.abstractmethod
     def compress(self, outputobj, exclude=None):
-        """"""
+        """压缩函数
+        outputobj  class of zlibutils.compress.Recver
+        """
+        if self.native:
+            self._native_compress(outputobj, exclude)
+        else:
+            self._shell_compress(outputobj, exclude)
+
+    @abc.abstractmethod
+    def _native_compress(self, outputobj, exclude):
+        """python原生解压函数"""
+
+    def _shell_compress(self, outputobj, exclude):
+        """python原生解压函数"""
+        raise NotImplementedError('Can not compress by system util')
+
     @abc.abstractmethod
     def cancel(self):
-        pass
+        """压缩取消"""
 
 
 class GzCompress(ImplCompress):
+    def __init__(self, path, native=True, topdir=True):
+        super(GzCompress, self).__init__(path, native, topdir)
+        self.worker = None
 
-    def __init__(self, path):
-        super(GzCompress, self).__init__(path)
-        self.worker = False
-
-    def compress(self, outputobj, exclude=None):
+    def _native_compress(self, outputobj, exclude):
         """"""
         worker = GzFile.get_intance(outputobj)
-        worker.add(name=self.src,
-                   arcname=self.target,
-                   recursive=True, exclude=exclude)
+        if os.path.isfile(self.src) or self.topdir:
+            worker.add(name=self.src,
+                       arcname=self.target,
+                       recursive=True, exclude=exclude)
+        else:
+            for target in os.listdir(self.src):
+                worker.add(name=os.path.join(self.src, target),
+                           arcname=target,
+                           recursive=True, exclude=exclude)
         worker.close()
 
     def cancel(self):
@@ -64,17 +84,18 @@ class GzCompress(ImplCompress):
 
 
 class ZipCompress(ImplCompress):
-
-    def __init__(self, path):
-        super(ZipCompress, self).__init__(path)
+    def __init__(self, path, native=True, topdir=True):
+        super(ZipCompress, self).__init__(path, native, topdir)
         self.canceled = False
 
-    def compress(self, outputobj, exclude=None):
+    def _native_compress(self, outputobj, exclude):
         """"""
         worker = ZipFile(file=outputobj, compression=ZIP_DEFLATED, mode='w')
         if os.path.isdir(self.src):
-            cut = len(self.root) + 1
-            worker.write(filename=self.src, arcname=self.target)
+            cut = len(self.src) + 1
+            if self.topdir:
+                cut = len(self.root) + 1
+                worker.write(filename=self.src, arcname=self.target)
             for root, dirs, files in os.walk(self.src):
                 if self.canceled:
                     raise CancelledError
