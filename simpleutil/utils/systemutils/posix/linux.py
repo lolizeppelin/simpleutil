@@ -64,15 +64,15 @@ def prepare_group(group):
 
     try:
         yield
-    except:
+    except Exception:
         if _group and _group.gr_gid > 0:
             args = [GROUPDEL, _group.gr_name]
             try:
                 with open(os.devnull, 'wb') as f:
                     sub = subprocess.Popen(executable=GROUPDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
                     public.subwait(sub)
-            except:
-                logging.critical('Remove group %s fail' % _group.gr_name)
+            except Exception as e:
+                logging.critical('Remove group %s fail because %s' % (_group.gr_name, str(e)))
         raise
 
 
@@ -105,15 +105,15 @@ def prepare_user(user, group, home=None):
             _user = None
         try:
             yield
-        except:
+        except Exception:
             if _user and _user.pw_uid > 0:
                 args = [USERDEL, _user.pw_name]
                 try:
                     with open(os.devnull, 'wb') as f:
                         sub = subprocess.Popen(executable=USERDEL, args=args, stderr=f.fileno(), stdout=f.fileno())
                         public.subwait(sub)
-                except:
-                    logging.critical('Remove user %s fail' % _user.pw_name)
+                except Exception as e:
+                    logging.critical('Remove user %s fail because %s' % (_user.pw_name, str(e)))
             raise
 
 
