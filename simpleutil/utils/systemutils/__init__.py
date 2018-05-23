@@ -4,11 +4,13 @@ import subprocess
 from simpleutil.utils import strutils
 from simpleutil.utils.systemutils.public import *
 
-PID = 0
-
+PY27 = True if sys.version_info[0:2] >= (2, 7) else False
 TIMEOUT = object()
 # system encode
 SYSENCODE = sys.getfilesystemencoding()
+
+PID = 0
+
 
 
 if POSIX:
