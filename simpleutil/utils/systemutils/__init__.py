@@ -12,7 +12,6 @@ SYSENCODE = sys.getfilesystemencoding()
 PID = 0
 
 
-
 if POSIX:
     from simpleutil.utils.systemutils.posix import set_cloexec_flag
 
