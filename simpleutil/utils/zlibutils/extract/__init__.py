@@ -78,6 +78,7 @@ class Adapter(object):
     def stop(self):
         """stop extract"""
 
+
 class ShellAdapter(Adapter):
 
     def __init__(self, src, comptype):
