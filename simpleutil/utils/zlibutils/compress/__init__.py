@@ -2,7 +2,7 @@
 import os
 import eventlet
 from simpleutil.utils import importutils
-from simpleutil.utils import futurist
+from simpleutil.utils import systemutils
 from simpleutil.utils.zlibutils.compress import impl
 
 
@@ -215,15 +215,18 @@ class FileCachedRecver(Recver):
 
 
 class ZlibStream(object):
-    def __init__(self, path, comptype, recv=None,
-                 native=True, topdir=True):
+    def __init__(self, path, comptype, recv=None, topdir=True,
+                 native=True, fork=None):
         """
         不支持设置压缩等级,需要继承后改动函数,不确定兼容性
         zip压缩使用压缩等级8
         gz压缩使用等级9
         """
+        if fork and not systemutils.POSIX:
+            raise TypeError('Can not fork on windows system')
         if not os.path.exists(path):
             raise ValueError('path not exists')
+        self.fork = fork
         self.path = path
         cls = importutils.import_class('simpleutil.utils.zlibutils.compress.impl.%sCompress' %
                                        comptype.capitalize())
@@ -232,23 +235,19 @@ class ZlibStream(object):
             raise TypeError('Recver type error')
         self.compper = cls(path, native, topdir)
 
-    def compress(self, exclude=None):
-        if exclude:
-            if not callable(exclude):
-                raise RuntimeError('exclude is not callable')
-        def wapper():
-            with self.recvobj:
-                self.compper.compress(self.recvobj, exclude)
-        self.ft = futurist.Future(wapper)
-        self.ft.link()
-
-    def wait(self, timeout=None):
-        try:
-            self.ft.result(timeout)
-        except futurist.TimeoutError:
-            self.ft.cancel()
-        except futurist.CancelledError:
-            pass
+    def compress(self, exclude=None, timeout=None):
+        with self.recvobj:
+            if self.fork:
+                pid = self.fork()
+                if pid == 0:
+                    os.closerange(3, systemutils.MAXFD)
+                    self.compper.compress(self.recvobj, exclude, timeout=None)
+                    os._exit(0)
+                else:
+                    from simpleutil.utils.systemutils import posix
+                    posix.wait(pid, timeout)
+            else:
+                self.compper.compress(self.recvobj, exclude, timeout=None)
 
     def cancel(self):
         self.recvobj.cancel()

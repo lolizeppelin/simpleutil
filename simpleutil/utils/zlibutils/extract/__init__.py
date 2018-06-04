@@ -4,11 +4,9 @@ import six
 import tarfile
 import zipfile
 import subprocess
-import signal
+import time
 
 from simpleutil.utils import systemutils
-from simpleutil.utils import futurist
-from simpleutil.utils.zlibutils.waiter import Waiter
 
 UNZIP = systemutils.find_executable('unzip')
 TAR = systemutils.find_executable('tar')
@@ -33,8 +31,10 @@ class NativeTarFile(tarfile.TarFile):
     def chmod(self, tarinfo, targetpath):
         pass
 
-    def hookextractall(self, dst, exclude):
+    def hookextractall(self, dst, exclude, overtime):
         for tarinfo in self:
+            if int(time.time()) > overtime:
+                break
             if exclude and exclude(tarinfo):
                 continue
             self.extract(tarinfo, dst)
@@ -53,8 +53,10 @@ class NativeZipFile(zipfile.ZipFile):
     def __exit__(self, type, value, traceback):
         self.close()
 
-    def hookextractall(self, dst, exclude):
+    def hookextractall(self, dst, exclude, overtime):
         for zipinfo in self.namelist():
+            if int(time.time()) > overtime:
+                break
             if exclude and exclude(zipinfo):
                 continue
             self.extract(zipinfo, dst, None)
@@ -67,24 +69,14 @@ class Adapter(object):
         self.src = src
 
     @abc.abstractmethod
-    def extractall(self, dst, exclude=None):
+    def extractall(self, dst, exclude=None, timeout=None):
         """"""
-
-    @abc.abstractmethod
-    def wait(self, timeout=None):
-        """wait extract"""
-
-    @abc.abstractmethod
-    def stop(self):
-        """stop extract"""
-
 
 class ShellAdapter(Adapter):
 
     def __init__(self, src, comptype):
         super(ShellAdapter, self).__init__(src)
         self.comptype = comptype
-        self.sub = None
 
     @staticmethod
     def command_build_untar(src, dst, exclude):
@@ -118,42 +110,36 @@ class ShellAdapter(Adapter):
         else:
             raise TypeError('Can not extract for %s' % comptype)
 
-    def extractall(self, dst, exclude=None):
+    def extractall(self, dst, exclude=None, timeout=None):
         executable, args = ShellAdapter.build_command(self.comptype, self.src, dst, exclude)
-        self.sub = subprocess.Popen(args, executable=executable)
-
-    def wait(self, timeout=None):
-        if self.sub:
-            systemutils.subwait(self.sub, timeout)
-        else:
-            raise RuntimeError('BinAdapter not started')
-
-    def stop(self):
-        if self.sub:
-            self.sub.terminate()
+        sub = subprocess.Popen(args, executable=executable)
+        systemutils.subwait(sub, timeout)
 
 
 class NativeAdapter(Adapter):
-
-    def __init__(self, src, native_cls):
+    def __init__(self, src, native_cls, fork=None):
         super(NativeAdapter, self).__init__(src)
         self.native_cls = native_cls
-        self.ft = None
+        self.fork = fork
 
-    def extractall(self, dst, exclude=None):
-        def _extractall():
-            with self.native_cls.native_open(self.src) as ex:
-                ex.hookextractall(dst, exclude)
-        self.ft = futurist.Future(_extractall)
-        self.ft.start()
-
-    def wait(self, timeout=None):
-        self.ft.result(timeout=timeout)
-
-    def stop(self):
-        if self.ft:
-            self.ft.cancel()
-
+    def extractall(self, dst, exclude=None, timeout=None):
+        now = int(time.time())
+        if not timeout:
+            overtime = now + 3600
+        else:
+            overtime = now + timeout
+        with self.native_cls.native_open(self.src) as ex:
+            if self.fork:
+                pid = self.fork()
+                if pid == 0:
+                    os.closerange(3, systemutils.MAXFD)
+                    ex.hookextractall(dst, exclude, overtime)
+                    os._exit(0)
+                else:
+                    from simpleutil.utils.systemutils import posix
+                    posix.wait(pid, timeout)
+            else:
+                ex.hookextractall(dst, exclude, overtime)
 
 class Extract(object):
 
@@ -162,10 +148,13 @@ class Extract(object):
            'bz2': NativeTarFile,
            'zip': NativeZipFile}
 
-    def __init__(self, src, native=False):
+    def __init__(self, src, native=False, fork=None):
+        if fork and not systemutils.POSIX:
+            raise TypeError('Can not fork on windows system')
         compretype = Extract.find_compretype(src)
+        self.native = native
         if native:
-            self.adapter = NativeAdapter(src, Extract.MAP[compretype])
+            self.adapter = NativeAdapter(src, Extract.MAP[compretype], fork)
         else:
             self.adapter = ShellAdapter(src, compretype)
 
@@ -182,32 +171,5 @@ class Extract(object):
                 except zipfile.BadZipfile:
                     raise TypeError('Source file is can not be extract')
 
-    def extractall(self, dst, exclude, timeout=None, fork=None):
-        if fork:
-            if not systemutils.POSIX:
-                raise TypeError('Can not fork on windows system when extractall')
-            from simpleutil.utils.systemutils import posix
-            pid = fork()
-            if pid == 0:
-                os.closerange(3, systemutils.MAXFD)
-                self.adapter.extractall(dst)
-                self.adapter.wait(timeout)
-                os._exit(0)
-            else:
-                def wait():
-                    posix.wait(pid, timeout)
-
-                def stop():
-                    try:
-                        os.kill(pid, signal.SIGTERM)
-                    except OSError:
-                        pass
-
-                return Waiter(wait=wait, stop=stop)
-        else:
-            self.adapter.extractall(dst, exclude)
-
-            def wait():
-                self.adapter.wait(timeout)
-
-            return Waiter(wait=wait, stop=self.adapter.stop)
+    def extractall(self, dst, exclude, timeout=None):
+        self.adapter.extractall(dst, exclude, timeout)

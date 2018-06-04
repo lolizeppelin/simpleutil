@@ -17,7 +17,6 @@ def cachefile_recver(src, dst):
     s = time.time()
     compr = compress.ZlibStream(src, comptype=comptype, recv=recver)
     compr.compress()
-    compr.wait()
     print time.time() - s, 'comper %s success' % comptype
 
 
@@ -30,8 +29,7 @@ def cancel_recver(src, dst):
     # eventlet.sleep(0.3)
     print 'cancel spawned'
     compr.compress()
-    print 'start, waiting'
-    print compr.wait()
+    print 'finish, waiting'
     print time.time() - s, 'comper %s success' % comptype
 
 
@@ -57,15 +55,19 @@ def main():
     cachefile_recver(source_dir, zip_file)
 
     clean(empty_dir)
-    zlibutils.async_extract(gz_file, empty_dir, native=True)
+    ft1 = zlibutils.async_extract(gz_file, empty_dir, native=True)
     clean(empty_dir)
-    zlibutils.async_extract(gz_file, empty_dir, native=False)
+    ft2 = zlibutils.async_extract(gz_file, empty_dir, native=False)
     # clean(empty_dir)
-    zlibutils.async_extract(zip_file, empty_dir, native=True)
+    ft3 = zlibutils.async_extract(zip_file, empty_dir, native=True)
     clean(empty_dir)
-    zlibutils.async_extract(zip_file, empty_dir, native=False)
+    ft4 = zlibutils.async_extract(zip_file, empty_dir, native=False)
     # clean(empty_dir)
 
+    ft1.result()
+    ft2.result()
+    ft3.result()
+    ft4.result()
 
 if __name__ == '__main__':
     main()

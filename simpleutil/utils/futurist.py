@@ -8,18 +8,21 @@ from eventlet.semaphore import Semaphore
 from simpleutil.utils import threadgroup
 
 NOT_FINISH = object()
+FINISH = object()
+TIMEOUT = object()
 
 
 class Error(Exception):
     """Base class for all future-related exceptions."""
     pass
 
+
 class CancelledError(Error):
     """"""
 
+
 class TimeoutError(Error):
     """The operation exceeded the given deadline."""
-    pass
 
 
 class Future(object):
@@ -27,10 +30,14 @@ class Future(object):
     def __init__(self, func):
         self._func = func
         self._thread = None
-        self._result = NOT_FINISH
+        self._state = NOT_FINISH
+        self._result = None
+        self._exception = None
         self.canceled = False
 
     def link(self, pool=None):
+        if self._state is not NOT_FINISH:
+            raise RuntimeError('Do not link finished future')
         if self._thread:
             raise RuntimeError('Do not link twice')
         if pool is None:
@@ -43,57 +50,75 @@ class Future(object):
     def __call__(self):
         # do not raise anything from _func
         # this Future can not catch any error
-        self._result = self._func()
+        if self.canceled or self._state is not NOT_FINISH:
+            raise RuntimeError('Do not call future twice')
+        try:
+            self._result = self._func()
+        except Exception as e:
+            self._exception = e
+        finally:
+            self._state = FINISH
+
+    @property
+    def finished(self):
+        return self._state is not NOT_FINISH
+
+    @property
+    def _return(self):
+        if self._state is NOT_FINISH:
+            raise RuntimeError('Future is not finishd, do not call for return value')
+        if self._exception:
+            raise self._exception
+        return self._result
 
     def result(self, timeout=None):
         if self.canceled:
             raise CancelledError('Future has been canceled')
-        if self._result is not NOT_FINISH:
-            return self._result
+        if self._state is not NOT_FINISH:
+            return self._return
         if timeout is None:
             if self._thread is None:
-                self()
-                return self._result
+                self._thread = threadgroup.Thread(eventlet.spawn(self))
             try:
                 self._thread.wait()
             except GreenletExit:
                 if self.canceled:
                     raise CancelledError('Future has been canceled')
                 raise RuntimeError('Future unexcept switch back')
-            return self._result
+            return self._return
         else:
             if not self._thread:
-                raise RuntimeError('Future thred is None, aynce is disable')
-            _finish = object()
-            _timeout = object()
+                raise RuntimeError('Future thred is None, async is disable')
+            # _finish = object()
+            # _timeout = object()
             hub = eventlet.hubs.get_hub()
             me = eventlet.getcurrent()
             # switch back when thread finished
             callback = me.switch
-            self._thread.link(callback, _finish)
+            self._thread.link(callback, FINISH)
             # switch back when timeout
-            timer = hub.schedule_call_global(timeout, callback, _timeout)
+            timer = hub.schedule_call_global(timeout, callback, TIMEOUT)
             # swith to main hub
             # switch back by thread done, cancel timer
             ret = hub.switch()
-            if ret is _timeout:
+            if ret is TIMEOUT:
                 # call back by timeout timer
-                if not self._thread.unlink(callback, _finish):
+                if not self._thread.unlink(callback, FINISH):
                     raise RuntimeError('Remove switch back fail')
                 raise TimeoutError('Future fetch result timeout')
-            elif isinstance(ret, Iterable) and _finish in ret:
+            elif isinstance(ret, Iterable) and FINISH in ret:
                 timer.cancel()
                 if self.canceled:
                     raise CancelledError('Future canceled')
-                return self._result
+                return self._return
             else:
                 raise RuntimeError('Unexcept switch back')
 
     def cancel(self):
         if self.canceled:
-            return 
-        if self._result is not NOT_FINISH:
-            raise RuntimeError('Work has been finished')
+            return
+        if self._state is not NOT_FINISH:
+            raise RuntimeError('Future has been finished')
         self.canceled = True
         self._thread.stop()
 
