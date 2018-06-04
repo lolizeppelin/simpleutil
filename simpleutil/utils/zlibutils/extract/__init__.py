@@ -1,6 +1,7 @@
 import os
 import abc
 import six
+import signal
 import tarfile
 import zipfile
 import subprocess
@@ -70,13 +71,18 @@ class Adapter(object):
 
     @abc.abstractmethod
     def extractall(self, dst, exclude=None, timeout=None):
-        """"""
+        """execute extractall"""
+
+    @abc.abstractmethod
+    def cancel(self):
+        """cancel extractall"""
 
 class ShellAdapter(Adapter):
 
     def __init__(self, src, comptype):
         super(ShellAdapter, self).__init__(src)
         self.comptype = comptype
+        self.sub = None
 
     @staticmethod
     def command_build_untar(src, dst, exclude):
@@ -112,8 +118,13 @@ class ShellAdapter(Adapter):
 
     def extractall(self, dst, exclude=None, timeout=None):
         executable, args = ShellAdapter.build_command(self.comptype, self.src, dst, exclude)
-        sub = subprocess.Popen(args, executable=executable)
-        systemutils.subwait(sub, timeout)
+        self.sub = subprocess.Popen(args, executable=executable)
+        systemutils.subwait(self.sub, timeout)
+        self.sub = None
+
+    def cancel(self):
+        if self.sub:
+            self.sub.kill()
 
 
 class NativeAdapter(Adapter):
@@ -121,25 +132,33 @@ class NativeAdapter(Adapter):
         super(NativeAdapter, self).__init__(src)
         self.native_cls = native_cls
         self.fork = fork
+        self.pid = None
+        self.overtime = int(time.time())
 
     def extractall(self, dst, exclude=None, timeout=None):
-        now = int(time.time())
         if not timeout:
-            overtime = now + 3600
+            self.overtime = self.overtime + 3600
         else:
-            overtime = now + timeout
+            self.overtime = self.overtime + timeout
         with self.native_cls.native_open(self.src) as ex:
             if self.fork:
-                pid = self.fork()
+                self.pid = pid = self.fork()
                 if pid == 0:
                     os.closerange(3, systemutils.MAXFD)
-                    ex.hookextractall(dst, exclude, overtime)
+                    ex.hookextractall(dst, exclude, self.overtime)
                     os._exit(0)
                 else:
                     from simpleutil.utils.systemutils import posix
                     posix.wait(pid, timeout)
+                    self.pid = None
             else:
-                ex.hookextractall(dst, exclude, overtime)
+                ex.hookextractall(dst, exclude, self.overtime)
+
+    def cancel(self):
+        self.overtime = 0
+        if self.pid:
+            os.kill(self.pid, signal.SIGKILL)
+
 
 class Extract(object):
 
@@ -173,3 +192,6 @@ class Extract(object):
 
     def extractall(self, dst, exclude, timeout=None):
         self.adapter.extractall(dst, exclude, timeout)
+
+    def cancel(self):
+        self.adapter.cancel()
