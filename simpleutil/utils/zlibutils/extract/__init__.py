@@ -77,6 +77,7 @@ class Adapter(object):
     def cancel(self):
         """cancel extractall"""
 
+
 class ShellAdapter(Adapter):
 
     def __init__(self, src, comptype):

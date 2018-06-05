@@ -1,221 +1,217 @@
 # -*- coding: UTF-8 -*-
 import os
+import six
+import abc
+import time
+import stat
+import signal
 import eventlet
-from simpleutil.utils import importutils
+from zipfile import ZIP_DEFLATED
+from tarfile import _Stream
+from tarfile import RECORDSIZE
+
 from simpleutil.utils import systemutils
-from simpleutil.utils.zlibutils.compress import impl
+
+if not systemutils.PY27:
+    import zipfile
+    import tarfile
 
 
-class Recver(object):
-    """
-    压缩写入对象
-    模拟file objet
-    """
-    def __init__(self, cache_size=0):
-        # 缓存字符串长度
-        # gz已经缓存过不需要再缓存
-        # 当前位置
-        self.pos = 0
-        # 末尾位置
-        self.end_pos = 0
-        # 最后发送的结尾
-        self.fire_pos = 0
-        # write缓存字符
-        self.cache_buffer = ""
-        # 缓存buffer长度
-        self.cache_size = cache_size
-        # 偏移写入列表
-        self.seek_write_list = []
-        self.canceld = False
+    class ZipFile(zipfile.ZipFile):
 
-    def __enter__(self):
-        pass
+        def __enter__(self):
+            return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if not self.canceld:
+        def __exit__(self, type, value, traceback):
             self.close()
+
+
+    class TarFile(tarfile.TarFile):
+
+        def __enter__(self):
+            self._check()
+            return self
+
+        def __exit__(self, type, value, traceback):
+            if type is None:
+                self.close()
+            else:
+                # An exception occurred. We must not call close() because
+                # it would try to write end-of-archive blocks and padding.
+                if not self._extfileobj:
+                    self.fileobj.close()
+                self.closed = True
+else:
+    from zipfile import ZipFile
+    from tarfile import TarFile
+
+
+class CompressBreak(Exception):
+    """Compress Stop Exception"""
+
+
+@six.add_metaclass(abc.ABCMeta)
+class ImplCompress(object):
+    def __init__(self, path):
+        if path.endswith('/'):
+            path = path[:-1]
+        self.src = os.path.abspath(path)
+        self.root, self.target = os.path.split(self.src)
+        # 目标对象是根目录
+        if not self.target:
+            raise RuntimeError('Target path is root')
+        self.comprer = None
+
+    @abc.abstractmethod
+    def compress(self, fileobj, exclude=None, timeout=None):
+        """压缩函数
+        fileobj  object like file object
+        """
+
+    @abc.abstractmethod
+    def cancel(self):
+        """压缩取消"""
+
+
+@six.add_metaclass(abc.ABCMeta)
+class Adapter(object):
+    def __init__(self, src):
+        self.src = src
+
+    @abc.abstractmethod
+    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+        """execute compress"""
+
+    @abc.abstractmethod
+    def cancel(self):
+        """cancel compress"""
+
+
+class GzCompress(ImplCompress):
+    def __init__(self, path):
+        super(GzCompress, self).__init__(path)
+        self.gzobj = None
+        self.timer = None
+
+    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+        hub = eventlet.hubs.get_hub()
+        self.timer = hub.schedule_call_global(timeout, self.cancel)
+        with TarFile(name=None, mode='w', fileobj=_Stream(None, 'w', 'gz', fileobj, RECORDSIZE)) as gzobj:
+            self.gzobj = gzobj
+            gzobj._extfileobj = False
+            self.comprer = gzobj
+            if os.path.isfile(self.src) or topdir:
+                gzobj.add(name=self.src,
+                          arcname=self.target,
+                          recursive=True, exclude=exclude)
+            else:
+                for target in os.listdir(self.src):
+                    gzobj.add(name=os.path.join(self.src, target),
+                              arcname=target,
+                              recursive=True, exclude=exclude)
 
     def cancel(self):
-        self.canceld = True
-        self.write = self.ioerror
+        def raise_to_stop(*args, **kwargs):
+            raise CompressBreak('Cancel called')
 
-    def ioerror(self, *args, **kwargs):
-        raise IOError('Recver cancel')
+        if self.timer:
+            self.timer.cancel()
+            self.timer = None
+        if self.gzobj:
+            self.gzobj.add = raise_to_stop
+            self.gzobj.addfile = raise_to_stop
 
-    def fire(self, fire_list):
-        """
-        实际处理压缩后字符串的接口
-        @param fire_list: 需要处理的位置+字符串组成的列表[(pos, buffer), (pos, buffer)]
-        """
-        raise NotImplementedError('function fire not exist')
 
-    def cachewrite(self, buffer):
-        # 偏移写入列表
-        if len(self.seek_write_list) >= 30:
-            self.fire(self.seek_write_list)
-            del self.seek_write_list[:]
-        self.cache_buffer += buffer
-        self.pos += len(buffer)
-        self.end_pos = self.pos
-        # 发送所有缓存数据
-        if len(self.cache_buffer) > self.cache_size:
-            self.fire([(self.fire_pos, self.cache_buffer)])
-            self.fire_pos += len(self.cache_buffer)
-            self.cache_buffer = ""
+class ZipCompress(ImplCompress):
+    def __init__(self, path):
+        super(ZipCompress, self).__init__(path)
+        self.overtime = 0
 
-    def seek_write(self, buffer):
-        # 当前写入位置已经被发送过
-        if self.pos < self.fire_pos:
-            # 写入长度小于当前已经处理位置,直接添加到替换列表
-            if self.pos + len(buffer) <= self.fire_pos:
-                self.seek_write_list.append((self.pos, buffer))
-                self.pos += len(buffer)
+    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+        """"""
+        now = int(time.time())
+        self.overtime = now + int(timeout if timeout else 3600)
+        with ZipFile(file=fileobj, compression=ZIP_DEFLATED, mode='w') as zipobj:
+            if os.path.isdir(self.src):
+                cut = len(self.src) + 1
+                if topdir:
+                    cut = len(self.root) + 1
+                    zipobj.write(filename=self.src, arcname=self.target)
+                for root, dirs, files in os.walk(self.src):
+                    if int(time.time()) > self.overtime:
+                        raise CompressBreak('Cancel called or overtime')
+                    for _dir in dirs:
+                        dir_name = os.path.join(root, _dir)
+                        if exclude and exclude(dir_name[cut:]):
+                            continue
+                        zipobj.write(filename=dir_name, arcname=dir_name[cut:])
+                    for _file in files:
+                        if int(time.time()) > self.overtime:
+                            raise CompressBreak('Cancel called or overtime')
+                        file_name = os.path.join(root, _file)
+                        if exclude and exclude(file_name[cut:]):
+                            continue
+                        zipobj.write(filename=file_name, arcname=file_name[cut:])
+            elif os.path.isfile(self.src):
+                file_stat = os.stat(self.src)
+                # 文件是否为普通文件
+                if not stat.S_ISREG(file_stat[stat.ST_MODE]):
+                    raise IOError('file type error')
+                zipobj.write(filename=self.src, arcname=self.target)
             else:
-                # 切片
-                cut_pos = self.fire_pos - self.pos
-                self.seek_write_list.append((self.pos, buffer[:cut_pos]))
-                # 剩余部分递归调用替换
-                self.pos = self.fire_pos
-                self.seek_write(buffer[cut_pos:])
-        # 未发送过,还在缓存字符串里
-        else:
-            # 没有超出结束位置
-            if self.pos + len(buffer) <= self.end_pos:
-                self.cache_buffer = self.cache_buffer[:self.pos-self.fire_pos] \
-                                    + buffer \
-                                    + self.cache_buffer[self.pos+len(buffer)-self.fire_pos:]
-                self.pos += len(buffer)
-            # 总长度超出
+                raise IOError('not file or dir %s' % self.src)
+
+    def cancel(self):
+        self.overtime = 0
+
+
+class ShellAdapter(Adapter):
+    """shell compress"""
+
+    def __init__(self, src, comptype):
+        super(ShellAdapter, self).__init__(src)
+        self.comptype = comptype
+        self.sub = None
+
+    def cancel(self):
+        self.sub.kill()
+
+
+class NativeAdapter(Adapter):
+    def __init__(self, src, native_cls, fork=None):
+        super(NativeAdapter, self).__init__(src)
+        self.comprer = native_cls(src)
+        self.fork = fork
+        self.pid = None
+
+    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+        if self.fork:
+            self.pid = pid = self.fork()
+            if pid == 0:
+                # close fd exclude file object fd
+                os.closerange(3, fileobj.fileno())
+                os.closerange(fileobj.fileno() + 1, systemutils.MAXFD)
+                self.comprer.compress(fileobj, topdir, exclude, timeout)
+                os._exit(0)
             else:
-                self.cache_buffer = self.cache_buffer[:self.pos-self.fire_pos] + buffer
-                self.pos += len(buffer)
-                self.end_pos = self.pos
-
-    def close(self):
-        if self.cache_buffer:
-            self.fire([(self.fire_pos, self.cache_buffer)])
-            self.fire_pos += len(self.cache_buffer)
-            self.cache_buffer = ""
-        if self.seek_write_list:
-            self.fire(self.seek_write_list)
-            del self.seek_write_list[:]
-
-    def __call__(self, buffer):
-        self.write(buffer)
-
-    def write(self, buffer):
-        if not buffer:
-            return
-        # 有偏移量
-        if self.pos < self.end_pos:
-            self.seek_write(buffer)
+                from simpleutil.utils.systemutils import posix
+                posix.wait(pid, timeout)
         else:
-            # 当前位置没有变化
-            self.cachewrite(buffer)
+            print '11111'
+            self.comprer.compress(fileobj, topdir, exclude, timeout)
 
-    def flush(self):
-        pass
-
-    def tell(self):
-        return self.pos
-
-    def seek(self, pos, whence):
-        if not whence:
-            seek_pos = pos
-        elif whence == 1:
-            seek_pos = self.pos + pos
-        elif whence == 2:
-            seek_pos = self.end_pos - pos
+    def cancel(self):
+        if self.pid:
+            os.kill(self.pid, signal.SIGKILL)
         else:
-            raise ValueError('Whence value error')
-        if seek_pos < 0:
-            raise ValueError('Pos less then zero')
-        if seek_pos > self.end_pos:
-            raise IOError('Seek pos over end pos')
-        self.pos = seek_pos
-
-    def set_cache(self, cache_size):
-        if self.cache_buffer or self.fire_pos or self.end_pos:
-            raise RuntimeError('Recver is working')
-        if not isinstance(cache_size, (int, long)):
-            raise TypeError('Recver find cache size type error')
-        self.cache_size = cache_size
-
-    def set_parent(self, parent):
-        self.parent = parent
-
-
-class FileRecver(Recver):
-    """
-    直接写文件的Recver,无缓存
-    """
-    def __init__(self, targetfile):
-        super(FileRecver, self).__init__()
-        self.targetfile = targetfile
-        self.obj = None
-
-    def __enter__(self):
-        self.obj = open(self.targetfile, 'wb')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            self.obj.close()
-        except (OSError, IOError):
-            self.obj = None
-
-    def write(self, buffer):
-        if not buffer:
-            return
-        eventlet.sleep(0)
-        self.obj.write(buffer)
-
-    def seek(self, pos, whence):
-        self.obj.seek(pos, whence)
-
-    def flush(self):
-        self.obj.flush()
-
-    def fire(self, fire_list):
-        pass
-
-    def close(self):
-        self.obj.close()
-
-    def tell(self):
-        return self.obj.tell()
-
-
-class FileCachedRecver(Recver):
-
-    def __init__(self, targetfile, cache_size=0):
-        super(FileCachedRecver, self).__init__(cache_size)
-        self.targetfile = targetfile
-        self.obj = None
-
-    def __enter__(self):
-        self.obj = open(self.targetfile, 'wb')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        try:
-            self.close()
-        except (OSError, IOError):
-            self.obj = None
-
-    def fire(self, fire_list):
-        for data in fire_list:
-            self.obj.seek(data[0])
-            self.obj.write(data[1])
-
-    def close(self):
-        super(FileCachedRecver, self).close()
-        self.obj.close()
-
-    def flush(self):
-        self.obj.flush()
+            self.adapter.cancel()
 
 
 class ZlibStream(object):
-    def __init__(self, path, comptype, recv=None, topdir=True,
+    MAP = {'gz': GzCompress,
+           'zip': ZipCompress}
+
+    def __init__(self, path, compretype,
                  native=True, fork=None):
         """
         不支持设置压缩等级,需要继承后改动函数,不确定兼容性
@@ -224,31 +220,21 @@ class ZlibStream(object):
         """
         if fork and not systemutils.POSIX:
             raise TypeError('Can not fork on windows system')
-        if not os.path.exists(path):
-            raise ValueError('path not exists')
-        self.fork = fork
-        self.path = path
-        cls = importutils.import_class('simpleutil.utils.zlibutils.compress.impl.%sCompress' %
-                                       comptype.capitalize())
-        self.recvobj = recv
-        if not isinstance(self.recvobj, Recver):
-            raise TypeError('Recver type error')
-        self.compper = cls(path, native, topdir)
 
-    def compress(self, exclude=None, timeout=None):
-        with self.recvobj:
-            if self.fork:
-                pid = self.fork()
-                if pid == 0:
-                    os.closerange(3, systemutils.MAXFD)
-                    self.compper.compress(self.recvobj, exclude, timeout=None)
-                    os._exit(0)
-                else:
-                    from simpleutil.utils.systemutils import posix
-                    posix.wait(pid, timeout)
-            else:
-                self.compper.compress(self.recvobj, exclude, timeout=None)
+        if not os.path.exists(path):
+            raise ValueError('source path not exists')
+        self.native = native
+        if native:
+            self.adapter = NativeAdapter(path, ZlibStream.MAP[compretype], fork)
+        else:
+            self.adapter = ShellAdapter(path, compretype)
+
+    def compr2fobj(self, fileobj, topdir=True, exclude=None, timeout=None):
+        self.adapter.compress(fileobj, topdir, exclude, timeout)
+
+    def compr2file(self, dst, topdir=True, exclude=None, timeout=None):
+        with open(dst, 'wb') as fileobj:
+            self.compr2fobj(fileobj, topdir, exclude, timeout)
 
     def cancel(self):
-        self.recvobj.cancel()
-        self.compper.cancel()
+        self.adapter.cancel()

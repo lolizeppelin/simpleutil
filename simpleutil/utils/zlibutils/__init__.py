@@ -2,13 +2,13 @@
 """异步压缩解压方法"""
 import os
 from simpleutil.utils.zlibutils.extract import Extract
-from simpleutil.utils.zlibutils.compress import FileRecver
 from simpleutil.utils.zlibutils.compress import ZlibStream
 
 from simpleutil.utils.futurist import GreenThreadPoolExecutor
 
 
 class Waiter(object):
+    """等待压缩/解压完成"""
     def __init__(self, ft, cancel):
         self.ft = ft
         self.cancel = cancel
@@ -60,9 +60,8 @@ def async_compress(src, dst, topdir=True,
     @raise TypeError:       压缩方式不支持
     """
     timeout = float(timeout) if timeout else None
-    comptype = os.path.splitext(dst)[1][1:]
-    comptyper = ZlibStream(src, comptype=comptype, recv=FileRecver(dst), topdir=topdir,
-                           native=native, fork=fork)
+    compretype = os.path.splitext(dst)[1][1:]
+    comptyper = ZlibStream(src, compretype=compretype, native=native, fork=fork)
     executor = GreenThreadPoolExecutor(max_workers=1)
-    return Waiter(ft=executor.submit(comptyper.compress, exclude, timeout),
+    return Waiter(ft=executor.submit(comptyper.compr2file, dst, topdir, exclude, timeout),
                   cancel=comptyper.cancel)

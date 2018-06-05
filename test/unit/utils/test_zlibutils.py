@@ -8,27 +8,27 @@ from eventlet import hubs
 hub = hubs.get_hub()
 
 from simpleutil.utils.zlibutils import compress
+from simpleutil.utils.zlibutils import recvobj
 from simpleutil.utils import zlibutils
 
 
 def cachefile_recver(src, dst):
     comptype = os.path.splitext(dst)[1][1:]
-    recver = compress.FileCachedRecver(dst, cache_size=60000)
+    # recver = recvobj.FileCachedRecver(dst, cache_size=60000)
     s = time.time()
-    compr = compress.ZlibStream(src, comptype=comptype, recv=recver)
-    compr.compress()
+    compr = compress.ZlibStream(src, compretype=comptype)
+    compr.compr2file(dst)
     print time.time() - s, 'comper %s success' % comptype
 
 
 def cancel_recver(src, dst):
     comptype = os.path.splitext(dst)[1][1:]
-    recver = compress.FileRecver(dst)
     s = time.time()
-    compr = compress.ZlibStream(src, comptype=comptype, recv=recver)
+    compr = compress.ZlibStream(src, compretype=comptype)
     eventlet.spawn_after(1, compr.cancel)
     # eventlet.sleep(0.3)
     print 'cancel spawned'
-    compr.compress()
+    compr.compr2file(dst)
     print 'finish, waiting'
     print time.time() - s, 'comper %s success' % comptype
 
@@ -55,19 +55,19 @@ def main():
     cachefile_recver(source_dir, zip_file)
 
     clean(empty_dir)
-    ft1 = zlibutils.async_extract(gz_file, empty_dir, native=True)
+    w1 = zlibutils.async_extract(gz_file, empty_dir, native=True)
     clean(empty_dir)
-    ft2 = zlibutils.async_extract(gz_file, empty_dir, native=False)
-    # clean(empty_dir)
-    ft3 = zlibutils.async_extract(zip_file, empty_dir, native=True)
+    w2 = zlibutils.async_extract(gz_file, empty_dir, native=False)
     clean(empty_dir)
-    ft4 = zlibutils.async_extract(zip_file, empty_dir, native=False)
+    w3 = zlibutils.async_extract(zip_file, empty_dir, native=True)
+    clean(empty_dir)
+    w4 = zlibutils.async_extract(zip_file, empty_dir, native=False)
     # clean(empty_dir)
 
-    ft1.result()
-    ft2.result()
-    ft3.result()
-    ft4.result()
+    w1.wait()
+    w2.wait()
+    w3.wait()
+    w4.wait()
 
 if __name__ == '__main__':
     main()
