@@ -79,10 +79,10 @@ class Adapter(object):
 
 
 class ShellAdapter(Adapter):
-
-    def __init__(self, src, comptype):
+    def __init__(self, src, comptype, prefunc):
         super(ShellAdapter, self).__init__(src)
         self.comptype = comptype
+        self.prefunc = prefunc
         self.sub = None
 
     @staticmethod
@@ -119,7 +119,8 @@ class ShellAdapter(Adapter):
 
     def extractall(self, dst, exclude=None, timeout=None):
         executable, args = ShellAdapter.build_command(self.comptype, self.src, dst, exclude)
-        self.sub = subprocess.Popen(args, executable=executable)
+        self.sub = subprocess.Popen(args, executable=executable,
+                                    close_fds=True, preexec_fn=self.prefunc)
         systemutils.subwait(self.sub, timeout)
         self.sub = None
 
@@ -168,7 +169,7 @@ class Extract(object):
            'bz2': NativeTarFile,
            'zip': NativeZipFile}
 
-    def __init__(self, src, native=False, fork=None):
+    def __init__(self, src, native=False, fork=None, prefunc=None):
         if fork and not systemutils.POSIX:
             raise TypeError('Can not fork on windows system')
         compretype = Extract.find_compretype(src)
@@ -176,7 +177,7 @@ class Extract(object):
         if native:
             self.adapter = NativeAdapter(src, Extract.MAP[compretype], fork)
         else:
-            self.adapter = ShellAdapter(src, compretype)
+            self.adapter = ShellAdapter(src, compretype, prefunc)
 
     @staticmethod
     def find_compretype(src):

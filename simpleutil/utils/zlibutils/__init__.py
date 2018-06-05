@@ -24,8 +24,9 @@ class Waiter(object):
         return self.ft.finished
 
 
-def async_extract(src, dst, exclude=None, timeout=None,
-                  native=False, fork=None):
+def async_extract(src, dst,
+                  exclude=None, timeout=None,
+                  native=False, fork=None, prefunc=None):
     """
     @param src:             解压源文件
     @param dst:             解压目标文件夹
@@ -40,14 +41,14 @@ def async_extract(src, dst, exclude=None, timeout=None,
     """
     if not os.path.isdir(dst):
         raise RuntimeError('Destination is not folder')
-    extracter = Extract(src, native, fork)
+    extracter = Extract(src, native, fork, prefunc)
     executor = GreenThreadPoolExecutor(max_workers=1)
     return Waiter(ft=executor.submit(extracter.extractall, dst, exclude, timeout),
                   cancel=extracter.cancel)
 
 def async_compress(src, dst, topdir=True,
                    exclude=None, timeout=None,
-                   native=True, fork=None):
+                   native=True, fork=None, prefunc=None):
     """
     压缩至文件,需要传输到流中需要使用其他recv
     @param src:             压缩源文件/文件夹
@@ -61,7 +62,7 @@ def async_compress(src, dst, topdir=True,
     """
     timeout = float(timeout) if timeout else None
     compretype = os.path.splitext(dst)[1][1:]
-    comptyper = ZlibStream(src, compretype=compretype, native=native, fork=fork)
+    comptyper = ZlibStream(src, compretype, native, fork, prefunc)
     executor = GreenThreadPoolExecutor(max_workers=1)
     return Waiter(ft=executor.submit(comptyper.compr2file, dst, topdir, exclude, timeout),
                   cancel=comptyper.cancel)

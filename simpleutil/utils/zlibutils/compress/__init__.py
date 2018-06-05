@@ -168,9 +168,10 @@ class ZipCompress(ImplCompress):
 class ShellAdapter(Adapter):
     """shell compress"""
 
-    def __init__(self, src, comptype):
+    def __init__(self, src, comptype, prefunc):
         super(ShellAdapter, self).__init__(src)
         self.comptype = comptype
+        self.prefunc = prefunc
         self.sub = None
 
     def cancel(self):
@@ -197,7 +198,6 @@ class NativeAdapter(Adapter):
                 from simpleutil.utils.systemutils import posix
                 posix.wait(pid, timeout)
         else:
-            print '11111'
             self.comprer.compress(fileobj, topdir, exclude, timeout)
 
     def cancel(self):
@@ -212,7 +212,7 @@ class ZlibStream(object):
            'zip': ZipCompress}
 
     def __init__(self, path, compretype,
-                 native=True, fork=None):
+                 native=True, fork=None, prefunc=None):
         """
         不支持设置压缩等级,需要继承后改动函数,不确定兼容性
         zip压缩使用压缩等级8
@@ -227,7 +227,7 @@ class ZlibStream(object):
         if native:
             self.adapter = NativeAdapter(path, ZlibStream.MAP[compretype], fork)
         else:
-            self.adapter = ShellAdapter(path, compretype)
+            self.adapter = ShellAdapter(path, compretype, prefunc)
 
     def compr2fobj(self, fileobj, topdir=True, exclude=None, timeout=None):
         self.adapter.compress(fileobj, topdir, exclude, timeout)
