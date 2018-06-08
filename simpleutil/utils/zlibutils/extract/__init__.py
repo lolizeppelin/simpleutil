@@ -90,21 +90,21 @@ class ShellAdapter(Adapter):
         if TAR:
             ARGS = [TAR, ]
             if exclude:
-                for exclude in exclude():
-                    ARGS.append('--exclude=%s' % exclude)
+                for _exclude in exclude():
+                    ARGS.append('--exclude=%s' % _exclude)
             ARGS.extend(['-xf', src, '-C', dst])
             return TAR, ARGS
         raise NotImplementedError('can not find tar')
-        # return BinAdapter.command_build_un7za(src, dst)
 
     @staticmethod
     def command_build_unzip(src, dst, exclude):
         if UNZIP:
-            ARGS = [UNZIP, ]
+            ARGS = [UNZIP, src]
             if exclude:
-                for exclude in exclude():
-                    ARGS.extend(['-x' % exclude])
-            ARGS.extend(['-qq', '-o', src, '-d', dst])
+                ARGS.append('-x')
+                for _exclude in exclude():
+                    ARGS.append(_exclude)
+            ARGS.extend(['-qq', '-o', '-d', dst])
             return UNZIP, ARGS
         return NotImplementedError('can not unzip')
 
@@ -118,6 +118,7 @@ class ShellAdapter(Adapter):
             raise TypeError('Can not extract for %s' % comptype)
 
     def extractall(self, dst, exclude=None, timeout=None):
+        exclude = exclude(compretype=self.comptype, shell=True) if exclude else None
         executable, args = ShellAdapter.build_command(self.comptype, self.src, dst, exclude)
         self.sub = subprocess.Popen(args, executable=executable,
                                     close_fds=True, preexec_fn=self.prefunc)
@@ -130,14 +131,21 @@ class ShellAdapter(Adapter):
 
 
 class NativeAdapter(Adapter):
-    def __init__(self, src, native_cls, fork=None):
+    MAP = {'gz': NativeTarFile,
+           'tar': NativeTarFile,
+           'bz2': NativeTarFile,
+           'zip': NativeZipFile}
+
+    def __init__(self, src, compretype, fork=None):
         super(NativeAdapter, self).__init__(src)
-        self.native_cls = native_cls
+        self.compretype = compretype
+        self.native_cls = NativeAdapter[compretype]
         self.fork = fork
         self.pid = None
         self.overtime = int(time.time())
 
     def extractall(self, dst, exclude=None, timeout=None):
+        exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
         if not timeout:
             self.overtime = self.overtime + 3600
         else:
@@ -164,18 +172,13 @@ class NativeAdapter(Adapter):
 
 class Extract(object):
 
-    MAP = {'gz': NativeTarFile,
-           'tar': NativeTarFile,
-           'bz2': NativeTarFile,
-           'zip': NativeZipFile}
-
     def __init__(self, src, native=False, fork=None, prefunc=None):
         if fork and not systemutils.POSIX:
             raise TypeError('Can not fork on windows system')
         compretype = Extract.find_compretype(src)
         self.native = native
         if native:
-            self.adapter = NativeAdapter(src, Extract.MAP[compretype], fork)
+            self.adapter = NativeAdapter(src, compretype, fork)
         else:
             self.adapter = ShellAdapter(src, compretype, prefunc)
 

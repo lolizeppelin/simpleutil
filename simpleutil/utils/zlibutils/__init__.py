@@ -6,6 +6,8 @@ from simpleutil.utils.zlibutils.compress import ZlibStream
 
 from simpleutil.utils.futurist import GreenThreadPoolExecutor
 
+from simpleutil.utils.zlibutils.excluder import Excluder
+
 
 class Waiter(object):
     """等待压缩/解压完成"""
@@ -41,6 +43,8 @@ def async_extract(src, dst,
     """
     if not os.path.isdir(dst):
         raise RuntimeError('Destination is not folder')
+    if exclude is not None and not isinstance(exclude, Excluder):
+        raise TypeError('Exclude not type of Excluder')
     extracter = Extract(src, native, fork, prefunc)
     executor = GreenThreadPoolExecutor(max_workers=1)
     return Waiter(ft=executor.submit(extracter.extractall, dst, exclude, timeout),
@@ -60,6 +64,8 @@ def async_compress(src, dst, topdir=True,
     @return None:           当前方法无返回值
     @raise TypeError:       压缩方式不支持
     """
+    if exclude is not None and not isinstance(exclude, Excluder):
+        raise TypeError('Exclude not type of Excluder')
     timeout = float(timeout) if timeout else None
     compretype = os.path.splitext(dst)[1][1:]
     comptyper = ZlibStream(src, compretype, native, fork, prefunc)

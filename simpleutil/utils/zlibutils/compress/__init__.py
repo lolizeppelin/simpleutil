@@ -179,13 +179,18 @@ class ShellAdapter(Adapter):
 
 
 class NativeAdapter(Adapter):
-    def __init__(self, src, native_cls, fork=None):
+    MAP = {'gz': GzCompress,
+           'zip': ZipCompress}
+
+    def __init__(self, src, compretype, fork=None):
         super(NativeAdapter, self).__init__(src)
-        self.comprer = native_cls(src)
+        self.compretype = compretype
+        self.comprer = NativeAdapter[compretype]
         self.fork = fork
         self.pid = None
 
     def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+        exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
         if self.fork:
             self.pid = pid = self.fork()
             if pid == 0:
@@ -208,8 +213,6 @@ class NativeAdapter(Adapter):
 
 
 class ZlibStream(object):
-    MAP = {'gz': GzCompress,
-           'zip': ZipCompress}
 
     def __init__(self, path, compretype,
                  native=True, fork=None, prefunc=None):
@@ -225,7 +228,7 @@ class ZlibStream(object):
             raise ValueError('source path not exists')
         self.native = native
         if native:
-            self.adapter = NativeAdapter(path, ZlibStream.MAP[compretype], fork)
+            self.adapter = NativeAdapter(path, compretype, fork)
         else:
             self.adapter = ShellAdapter(path, compretype, prefunc)
 
