@@ -70,7 +70,7 @@ class Adapter(object):
         self.src = src
 
     @abc.abstractmethod
-    def extractall(self, dst, exclude=None, timeout=None):
+    def extractall(self, dst, timeout=None):
         """execute extractall"""
 
     @abc.abstractmethod
@@ -79,9 +79,10 @@ class Adapter(object):
 
 
 class ShellAdapter(Adapter):
-    def __init__(self, src, comptype, prefunc):
+    def __init__(self, src, compretype, exclude, prefunc):
         super(ShellAdapter, self).__init__(src)
-        self.comptype = comptype
+        self.compretype = compretype
+        self.exclude = exclude(compretype=compretype, shell=True) if exclude else None
         self.prefunc = prefunc
         self.sub = None
 
@@ -109,17 +110,17 @@ class ShellAdapter(Adapter):
         return NotImplementedError('can not unzip')
 
     @staticmethod
-    def build_command(comptype, src, dst, exclude):
-        if comptype == 'tar':
+    def build_command(compretype, src, dst, exclude):
+        if compretype == 'tar':
             return ShellAdapter.command_build_untar(src, dst, exclude)
-        elif comptype == 'zip':
+        elif compretype == 'zip':
             return ShellAdapter.command_build_unzip(src, dst, exclude)
         else:
-            raise TypeError('Can not extract for %s' % comptype)
+            raise TypeError('Can not extract for %s' % compretype)
 
-    def extractall(self, dst, exclude=None, timeout=None):
-        exclude = exclude(compretype=self.comptype, shell=True) if exclude else None
-        executable, args = ShellAdapter.build_command(self.comptype, self.src, dst, exclude)
+    def extractall(self, dst, timeout=None):
+        exclude = self.exclude
+        executable, args = ShellAdapter.build_command(self.compretype, self.src, dst, exclude)
         self.sub = subprocess.Popen(args, executable=executable,
                                     close_fds=True, preexec_fn=self.prefunc)
         systemutils.subwait(self.sub, timeout)
@@ -131,21 +132,23 @@ class ShellAdapter(Adapter):
 
 
 class NativeAdapter(Adapter):
+
     MAP = {'gz': NativeTarFile,
            'tar': NativeTarFile,
            'bz2': NativeTarFile,
            'zip': NativeZipFile}
 
-    def __init__(self, src, compretype, fork=None):
+    def __init__(self, src, compretype, exclude=None, fork=None):
         super(NativeAdapter, self).__init__(src)
+        self.exclude = exclude(compretype=compretype, shell=False) if exclude else None
         self.compretype = compretype
         self.native_cls = NativeAdapter[compretype]
         self.fork = fork
         self.pid = None
         self.overtime = int(time.time())
 
-    def extractall(self, dst, exclude=None, timeout=None):
-        exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
+    def extractall(self, dst, timeout=None):
+        exclude = self.exclude
         if not timeout:
             self.overtime = self.overtime + 3600
         else:
@@ -171,16 +174,15 @@ class NativeAdapter(Adapter):
 
 
 class Extract(object):
-
-    def __init__(self, src, native=False, fork=None, prefunc=None):
+    def __init__(self, src, native=False, exclude=None, fork=None, prefunc=None):
         if fork and not systemutils.POSIX:
             raise TypeError('Can not fork on windows system')
         compretype = Extract.find_compretype(src)
         self.native = native
         if native:
-            self.adapter = NativeAdapter(src, compretype, fork)
+            self.adapter = NativeAdapter(src, compretype, exclude, fork)
         else:
-            self.adapter = ShellAdapter(src, compretype, prefunc)
+            self.adapter = ShellAdapter(src, compretype, exclude, prefunc)
 
     @staticmethod
     def find_compretype(src):
@@ -195,8 +197,8 @@ class Extract(object):
                 except zipfile.BadZipfile:
                     raise TypeError('Source file is can not be extract')
 
-    def extractall(self, dst, exclude, timeout=None):
-        self.adapter.extractall(dst, exclude, timeout)
+    def extractall(self, dst, timeout=None):
+        self.adapter.extractall(dst, timeout)
 
     def cancel(self):
         self.adapter.cancel()

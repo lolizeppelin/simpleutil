@@ -80,7 +80,7 @@ class Adapter(object):
         self.src = src
 
     @abc.abstractmethod
-    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+    def compress(self, fileobj, topdir=True, timeout=None):
         """execute compress"""
 
     @abc.abstractmethod
@@ -169,18 +169,19 @@ class ZipCompress(ImplCompress):
 class ShellAdapter(Adapter):
     """shell compress"""
 
-    def __init__(self, src, comptype, prefunc):
+    def __init__(self, src, comptype, exclude=None, prefunc=None):
         super(ShellAdapter, self).__init__(src)
         self.comptype = comptype
+        self.exclude = exclude(compretype=self.compretype, shell=True) if exclude else None
         self.prefunc = prefunc
         self.sub = None
 
     @staticmethod
-    def build_command(comptype, src, fileobj, exclude):
+    def build_command(compretype, src, fileobj, exclude):
         raise NotImplementedError('Shel comper adapter not impl')
 
-    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
-        exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
+    def compress(self, fileobj, topdir=True, timeout=None):
+        exclude = self.exclude
         executable, args = ShellAdapter.build_command(self.comptype, self.src, fileobj, exclude)
         self.sub = subprocess.Popen(args, executable=executable, stdout=fileobj.fileno(),
                                     close_fds=True, preexec_fn=self.prefunc)
@@ -196,15 +197,16 @@ class NativeAdapter(Adapter):
     MAP = {'gz': GzCompress,
            'zip': ZipCompress}
 
-    def __init__(self, src, compretype, fork=None):
+    def __init__(self, src, compretype, exclude=None, fork=None):
         super(NativeAdapter, self).__init__(src)
         self.compretype = compretype
         self.comprer = NativeAdapter[compretype]
+        self.exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
         self.fork = fork
         self.pid = None
 
-    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
-        exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
+    def compress(self, fileobj, topdir=True, timeout=None):
+        exclude = self.exclude
         if self.fork:
             self.pid = pid = self.fork()
             if pid == 0:
@@ -229,7 +231,7 @@ class NativeAdapter(Adapter):
 class ZlibStream(object):
 
     def __init__(self, path, compretype,
-                 native=True, fork=None, prefunc=None):
+                 native=True, exclude=None, fork=None, prefunc=None):
         """
         不支持设置压缩等级,需要继承后改动函数,不确定兼容性
         zip压缩使用压缩等级8
@@ -242,16 +244,16 @@ class ZlibStream(object):
             raise ValueError('source path not exists')
         self.native = native
         if native:
-            self.adapter = NativeAdapter(path, compretype, fork)
+            self.adapter = NativeAdapter(path, compretype, exclude, fork)
         else:
-            self.adapter = ShellAdapter(path, compretype, prefunc)
+            self.adapter = ShellAdapter(path, compretype, exclude, prefunc)
 
-    def compr2fobj(self, fileobj, topdir=True, exclude=None, timeout=None):
-        self.adapter.compress(fileobj, topdir, exclude, timeout)
+    def compr2fobj(self, fileobj, topdir=True, timeout=None):
+        self.adapter.compress(fileobj, topdir, timeout)
 
-    def compr2file(self, dst, topdir=True, exclude=None, timeout=None):
+    def compr2file(self, dst, topdir=True, timeout=None):
         with open(dst, 'wb') as fileobj:
-            self.compr2fobj(fileobj, topdir, exclude, timeout)
+            self.compr2fobj(fileobj, topdir, timeout)
 
     def cancel(self):
         self.adapter.cancel()
