@@ -92,6 +92,7 @@ class ShellAdapter(Adapter):
             ARGS = [TAR, ]
             if exclude:
                 for _exclude in exclude():
+                    # TODO windows?
                     ARGS.append('--exclude=%s' % _exclude)
             ARGS.extend(['-xf', src, '-C', dst])
             return TAR, ARGS
@@ -104,7 +105,7 @@ class ShellAdapter(Adapter):
             if exclude:
                 ARGS.append('-x')
                 for _exclude in exclude():
-                    ARGS.append(_exclude)
+                    ARGS.append(_exclude if not systemutils.WINDOWS else '"%s"' % _exclude)
             ARGS.extend(['-d', dst])
             return UNZIP, ARGS
         return NotImplementedError('can not unzip')
