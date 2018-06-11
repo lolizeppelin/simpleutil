@@ -100,13 +100,12 @@ class ShellAdapter(Adapter):
     @staticmethod
     def command_build_unzip(src, dst, exclude):
         if UNZIP:
-            ARGS = [UNZIP]
+            ARGS = [UNZIP, '-qq', '-o', src]
             if exclude:
                 ARGS.append('-x')
                 for _exclude in exclude():
                     ARGS.append(_exclude)
-
-            ARGS.extend(['-qq', '-o', src, '-d', dst])
+            ARGS.extend(['-d', dst])
             return UNZIP, ARGS
         return NotImplementedError('can not unzip')
 
