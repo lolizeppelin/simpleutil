@@ -96,6 +96,7 @@ class GzCompress(ImplCompress):
 
     def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
         hub = eventlet.hubs.get_hub()
+        timeout = timeout or 1200
         self.timer = hub.schedule_call_global(timeout, self.cancel)
         with TarFile(name=None, mode='w', fileobj=_Stream(None, 'w', 'gz', fileobj, RECORDSIZE)) as gzobj:
             self.gzobj = gzobj
@@ -200,7 +201,8 @@ class NativeAdapter(Adapter):
     def __init__(self, src, compretype, exclude=None, fork=None):
         super(NativeAdapter, self).__init__(src)
         self.compretype = compretype
-        self.comprer = NativeAdapter[compretype]
+        comprer_cls = NativeAdapter.MAP[compretype]
+        self.comprer = comprer_cls(src)
         self.exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
         self.fork = fork
         self.pid = None
@@ -225,7 +227,7 @@ class NativeAdapter(Adapter):
         if self.pid:
             os.kill(self.pid, signal.SIGKILL)
         else:
-            self.adapter.cancel()
+            self.comprer.cancel()
 
 
 class ZlibStream(object):

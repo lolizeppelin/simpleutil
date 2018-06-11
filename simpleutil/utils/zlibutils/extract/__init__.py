@@ -100,12 +100,13 @@ class ShellAdapter(Adapter):
     @staticmethod
     def command_build_unzip(src, dst, exclude):
         if UNZIP:
-            ARGS = [UNZIP, src]
+            ARGS = [UNZIP]
             if exclude:
                 ARGS.append('-x')
                 for _exclude in exclude():
                     ARGS.append(_exclude)
-            ARGS.extend(['-qq', '-o', '-d', dst])
+
+            ARGS.extend(['-qq', '-o', src, '-d', dst])
             return UNZIP, ARGS
         return NotImplementedError('can not unzip')
 
@@ -142,7 +143,7 @@ class NativeAdapter(Adapter):
         super(NativeAdapter, self).__init__(src)
         self.exclude = exclude(compretype=compretype, shell=False) if exclude else None
         self.compretype = compretype
-        self.native_cls = NativeAdapter[compretype]
+        self.native_cls = NativeAdapter.MAP[compretype]
         self.fork = fork
         self.pid = None
         self.overtime = int(time.time())
