@@ -6,6 +6,7 @@ import time
 import stat
 import signal
 import eventlet
+import subprocess
 from zipfile import ZIP_DEFLATED
 from tarfile import _Stream
 from tarfile import RECORDSIZE
@@ -174,8 +175,21 @@ class ShellAdapter(Adapter):
         self.prefunc = prefunc
         self.sub = None
 
+    @staticmethod
+    def build_command(comptype, src, fileobj, exclude):
+        raise NotImplementedError('Shel comper adapter not impl')
+
+    def compress(self, fileobj, topdir=True, exclude=None, timeout=None):
+        exclude = exclude(compretype=self.compretype, shell=False) if exclude else None
+        executable, args = ShellAdapter.build_command(self.comptype, self.src, fileobj, exclude)
+        self.sub = subprocess.Popen(args, executable=executable, stdout=fileobj.fileno(),
+                                    close_fds=True, preexec_fn=self.prefunc)
+        systemutils.subwait(self.sub, timeout)
+        self.sub = None
+
     def cancel(self):
-        self.sub.kill()
+        if self.sub:
+            self.sub.kill()
 
 
 class NativeAdapter(Adapter):
