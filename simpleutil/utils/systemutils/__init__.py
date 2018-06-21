@@ -23,6 +23,8 @@ if POSIX:
         from simpleutil.utils.systemutils.posix.linux import drop_group
         from simpleutil.utils.systemutils.posix.linux import prepare_user
         from simpleutil.utils.systemutils.posix.linux import drop_privileges
+        from simpleutil.utils.systemutils.posix.linux import unlimit_core
+        from simpleutil.utils.systemutils.posix.linux import open_file_limit
     else:
         umask = empty_context
         chmod = empty
@@ -31,6 +33,8 @@ if POSIX:
         drop_group = empty
         prepare_user = empty_context
         drop_privileges = empty
+        unlimit_core = empty
+        open_file_limit = empty
 
     def get_partion_free_bytes(folder):
         # f_bsize: 文件系统块大小

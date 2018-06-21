@@ -22,7 +22,7 @@ AIX = sys.platform.startswith('aix')
 try:
     import resource
     MAXFD = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-except:
+except (ImportError, AttributeError):
     MAXFD = 256
 
 

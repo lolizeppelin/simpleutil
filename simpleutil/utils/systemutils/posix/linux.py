@@ -4,6 +4,7 @@ import socket
 import contextlib
 import pwd
 import grp
+import resource
 import logging
 import subprocess
 
@@ -231,6 +232,13 @@ def drop_privileges(user=None, group=None):
 
     # logging.info("Process runs with uid/gid: %(uid)s/%(gid)s" % {'uid': os.getuid(), 'gid': os.getgid()})
 
+
+def unlimit_core():
+    resource.setrlimit(resource.RLIMIT_CORE, (-1, -1))
+
+
+def open_file_limit(num):
+    resource.setrlimit(resource.RLIMIT_NOFILE, (num, num))
 
 # -----------------------下面是systemd相关通知函数------------------#
 
