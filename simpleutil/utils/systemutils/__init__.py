@@ -90,6 +90,8 @@ elif WINDOWS:
     drop_group = empty
     prepare_user = empty_context
     drop_privileges = empty
+    unlimit_core = empty
+    open_file_limit = empty
 
     def get_partion_free_bytes(folder):
         """ Return folder/drive free space (in bytes)
