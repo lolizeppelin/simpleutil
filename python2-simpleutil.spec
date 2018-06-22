@@ -17,6 +17,9 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      noarch
 
 BuildRequires:  python-setuptools >= 11.0
+BuildRequires:  gcc >= 4.0
+BuildRequires:  python-devel >= 2.6.6
+BuildRequires:  python-devel < 3.0
 
 Requires:       python >= 2.6.6
 Requires:       python < 3.0

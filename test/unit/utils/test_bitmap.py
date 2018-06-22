@@ -13,10 +13,10 @@ bt.add(59)
 bt.add(6)
 bt.add(72)
 
-print bt.get(59)
-print bt.get(51)
-print bt.get(6)
-print bt.get(8)
+print bt.has(59)
+print bt.has(51)
+print bt.has(6)
+print bt.has(8)
 
 a = [x for x in bt.all()]
 b = [x for x in bt.all(reverse=True)]

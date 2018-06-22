@@ -5,7 +5,7 @@ import os
 from simpleutil import __version__
 
 try:
-    from setuptools import setup, find_packages
+    from setuptools import setup, find_packages, Extension
 except ImportError:
     from distutils.core import setup
 
@@ -14,7 +14,10 @@ f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
 long_description = f.read()
 f.close()
 
+cutils = Extension('simpleutil.utils._cutils', sources=['libs/_cutils.c'])
+
 setup(
+    ext_modules=[cutils],
     # oslo_cfg 要求 netaddr!=0.7.16,>=0.7.12 # BSD
     # kombu>=3.0.25否则timeout参数有问题
     install_requires=('netaddr>=0.7.5', 'eventlet>=0.18.4', 'six>=1.9.0',

@@ -1,14 +1,16 @@
 class BitMap(object):
+
     def __init__(self, max):
+        self.max = max
         self.size = 64 if max >= (1 << 32) else 32
         self.array = [0] * (int(max / self.size) + 1)
 
     def add(self, num):
-        assert num > 0
+        assert num > 0 and num < self.max
         self.array[num / self.size] |= (1 << (num % self.size))
 
-    def get(self, num):
-        assert num > 0
+    def has(self, num):
+        assert num > 0 and num < self.max
         return (self.array[num / self.size] & (1 << (num % self.size)) > 0)
 
     def all(self, reverse=False):
