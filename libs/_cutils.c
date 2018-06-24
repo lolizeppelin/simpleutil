@@ -1,41 +1,52 @@
 #include <time.h>
-#include <structmember.h>
+#include "structmember.h"
 #include "Python.h"
 
-static long MAXINT = (1 << 32)
-static long MAXLONG = (1 << 64)
+static long MAXINT = (1 << 32);
+static long MAXLONG = (1 << 64);
 
 typedef struct {
 	PyObject_HEAD
 //	PyObject_VAR_HEAD
     unsigned int _size;
     unsigned long _max;
-    void* _map_array;
+    void *_map_array;
 } _bitMapObject;
 
 
-static int bitmap_init(_bitMapObject self, PyObject args, PyObject kwds)
+static void bitmap_dealloc(_bitMapObject *self)
+{
+    if (self->_size < 64) {
+        free((int *)(self->_map_array));
+    } else {
+        free((long *)(self->_map_array));
+    }
+    Py_TYPE(self)->tp_free((PyObject)self);
+}
+
+
+static int bitmap_init(_bitMapObject *self, PyObject *args, PyObject *kwds)
 {
     unsigned long max;
     unsigned int size;
 
-    static char kwlist[] = {“max”, NULL};
+    static char *kwlist[] = {"max", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, “l”, kwlist, &max)) goto error;
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "k", kwlist, &max)) goto error;
 
     if (max >= MAXINT) {
         size = 64;
-        unsigned long arrays[max/size + 1];
-        arrays = malloc(sizeof(long)*(max/size +1));
+        unsigned long *arrays[max/size + 1];
+        arrays = malloc(sizeof(long)*(max/size + 1));
         if (arrays == NULL) goto error;
-        memset(arrays, 0, bfsize, sizeof(long)*(max/size +1));
+        memset(arrays, 0, bfsize, sizeof(long)*(max/size + 1));
     }
     else {
         size = 32;
-        unsigned int arrays[max/size + 1];
-        arrays = malloc(sizeof(int)*(max/size +1));
+        unsigned int *arrays[max/size + 1];
+        arrays = malloc(sizeof(int)*(max/size + 1));
         if (arrays == NULL) goto error;
-        memset(arrays, 0, bfsize, sizeof(int)*(max/size +1));
+        memset(arrays, 0, bfsize, sizeof(int)*(max/size + 1));
     }
 
     self->_size = size;
@@ -45,73 +56,84 @@ static int bitmap_init(_bitMapObject self, PyObject args, PyObject kwds)
     return 0;
 
     error:
-        PyErr_SetString(PyExc_ValueError, "args value error or malloc error");
+        PyErr_SetString(PyExc_ValueError, "args value error or malloc oversize");
         return -1;
 }
 
 
-static void bitmap_dealloc(_bitMapObject self)
-{
-    free(self->_map_array);
-    Py_TYPE(self)->tp_free((PyObject)self);
+static PyMemberDef bitMapMembers[] = {
+	{"size", T_UINT, offsetof(_bitMapObject, _size), READONLY, "Pre size bitmap"},
+	{"max", T_ULONG, offsetof(_bitMapObject, _max), READONLY, "Max value of bitmap"},
+	{NULL} /* Sentinel */
 }
 
-
-static PyObject bitmap_add(_bitMapObject self, PyObject* args)
+static PyObject *bitmap_add(_bitMapObject *self, PyObject *args)
 {
     unsigned long input;
-    if (!PyArg_ParseTuple(args, "l", &input)) return NULL;
-    if (new_value >= self._max) {
-        PyErr_SetString(PyExc_ValueError, “value over max size”);
+    if (!PyArg_ParseTuple(args, "k", &input)) return NULL;
+    if (new_value > self._max) {
+        PyErr_SetString(PyExc_ValueError, "value over max size");
         return NULL;
     }
+
     if (self->_size < 64) {
         unsigned int value = (unsigned int)input;
+        index = value/self->_size;
+        (int *)(self->_map_array)[index] |= (1 << (value % self->_size));
     } else {
         unsigned long value = input;
+        index = value/self->_size;
+        (long *)(self->_map_array)[index] |= (1 << (value % self->_size));
     }
-    index = value/self->_size;
-    self->_map_array[index] |= (1 << (value % self->_size));
+
 	Py_INCREF(Py_None);
 	return Py_None;
 }
 
 
-static PyObject bitmap_has(_bitMapObject self, PyObject* args)
+static PyObject *bitmap_has(_bitMapObject *self, PyObject *args)
 {
     unsigned long input;
     unsigned short success = 0;
-    if (!PyArg_ParseTuple(args, "l", &input)) return NULL;
+
+    if (!PyArg_ParseTuple(args, "k", &input)) return NULL;
     if (new_value >= self._max) {
-        PyErr_SetString(PyExc_ValueError, “value over max size”);
+        PyErr_SetString(PyExc_ValueError, "value over max size");
         return NULL;
     }
+
     if (self->_size < 64) {
         unsigned int value = 1 << (unsigned int)input % self->_size);
+        index = value/self->_size;
+        if (((int *)(self->_map_array)[index] & value) > 0) success = 1;
     } else {
         unsigned long value = 1 << (input % self->_size);
+        index = value/self->_size;
+        if (((long *)(self->_map_array)[index] & value) > 0) success = 1;
     }
-    index = value/self->_size;
-    if ((self->_map_array[index] & value) > 0) success = 1;
-    return (PyObject *)Py_BuildValue("H", success);
+    return Py_BuildValue("H", success);
 }
 
 
-static PyObject bitmap_get(_bitMapObject self, PyObject* args)
+static PyObject *bitmap_get(_bitMapObject *self, PyObject *args)
 {
     unsigned long index;
-    if (!PyArg_ParseTuple(args, "l", &index)) return NULL;
+     PyObject *result;
+
+    if (!PyArg_ParseTuple(args, "k", &index)) return NULL;
 
     unsigned long max_index = (unsigned long)(self->_max / self->_size) + 1
     if (index > max_index) {
-        PyErr_SetString(PyExc_ValueError, “index over range”);
+        PyErr_SetString(PyExc_ValueError, "index over range");
         return NULL;
     }
 
     if (self->_size < 64) {
-        return (PyObject *)Py_BuildValue("I", self->_map_array[index]);
+        result = Py_BuildValue("I", (int *)(self->_map_array)[index]);
+    } else {
+        result = Py_BuildValue("k", (long *)(self->_map_array)[index]);
     }
-     return (PyObject *)Py_BuildValue("k", self->_map_array[index]);
+     return result
 }
 
 
@@ -123,19 +145,13 @@ static PyMethodDef bitMapMethods[] = {
 };
 
 
-static PyMemberDef bitMapMembers[] = {
-	{"size", T_UINT, offsetof(_bitMapObject,_size), READONLY, "Pre size bitmap"},
-	{"max", T_ULONG, offsetof(_bitMapObject,_max), READONLY, "Max value of bitmap"},
-	{NULL} /* Sentinel */
-}
-
 
 static PyTypeObject _bitMap_Type = {
-    PyVarObject_HEAD_INIT(NULL)
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_cutils.bitMap",             /*tp_name*/
     sizeof(_bitMapObject),     /*tp_basicsize*/
     0,                         /*tp_itemsize*/
-    bitmap_dealloc,            /*tp_dealloc*/
+    (destructor)bitmap_dealloc,            /*tp_dealloc*/
     0,                         /*tp_print*/
     0,                         /*tp_getattr*/
     0,                         /*tp_setattr*/
@@ -172,11 +188,11 @@ static PyTypeObject _bitMap_Type = {
 };
 
 
-static PyObject* Cmonotonic(PyObject* self, PyObject* args) {
+static PyObject *Cmonotonic(PyObject *self, PyObject *args) {
     struct timespec ts;
     PyObject* millisecond;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    millisecond = (PyObject *)Py_BuildValue("k", ts.tv_sec*1000 + ts.tv_nsec / 1000000);
+    millisecond = Py_BuildValue("k", ts.tv_sec*1000 + ts.tv_nsec / 1000000);
     return millisecond;
 }
 
