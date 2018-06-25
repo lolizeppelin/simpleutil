@@ -16,7 +16,8 @@ f.close()
 
 cutils = Extension('simpleutil.utils._cutils',
                    sources=['libs/_cutils.c'],
-                   extra_compile_args=["-lrt"])
+                   # extra_compile_args=["-lrt"],
+                   extra_link_args=['-lrt'])
 
 setup(
     ext_modules=[cutils],
