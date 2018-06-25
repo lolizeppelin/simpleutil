@@ -25,6 +25,16 @@ static void bitmap_dealloc(_bitMapObject *self)
 }
 
 
+static PyObject *bitmap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+    _bitMapObject *self;
+    self = (_bitMapObject *)type->tp_alloc(type, 0);
+
+    return (PyObject *)self;
+}
+
+
+
 static int bitmap_init(_bitMapObject *self, PyObject *args, PyObject *kwds)
 {
     unsigned long max;
@@ -184,7 +194,7 @@ static PyTypeObject _bitMap_Type = {
     0,                         /* tp_dictoffset */
     (initproc)bitmap_init,     /* tp_init */
     0,                         /* tp_alloc */
-    0,                         /* tp_new */
+    bitmap_new,                /* tp_new */
 };
 
 
@@ -205,19 +215,20 @@ static PyMethodDef CutilsMethods[] = {
 
 PyMODINIT_FUNC
 init_cutils(void){
-    PyObject *dict, *module;
+
+    PyObject *module;
+
+    if (PyType_Ready(&_bitMap_Type) < 0) goto error;
+
     module = Py_InitModule3("_cutils", CutilsMethods, "C utils for get monotonic and get a bitmap");
-    if (!module) return; /* this really should never happen */
+    if (module == NULL) goto error;
 
     _bitMap_Type.ob_type = &PyType_Type;
     _bitMap_Type.tp_alloc = PyType_GenericAlloc;
     _bitMap_Type.tp_new = PyType_GenericNew;
 
-    dict = PyModule_GetDict(module);
-    if (!dict) goto error;
-	if (PyDict_SetItemString(dict, "bitMap", (PyObject *)&_bitMap_Type)) goto error;
-
 	Py_INCREF(&_bitMap_Type);
+	PyModule_AddObject(module, "bitMap", (PyObject *)&_bitMap_Type);
 
     error:
         if (PyErr_Occurred()) {
