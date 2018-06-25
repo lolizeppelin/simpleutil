@@ -13,6 +13,7 @@ License:        MPLv1.1 or GPLv2
 URL:            http://github.com/Lolizeppelin/%{proj_name}
 Source0:        %{proj_name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildArch:      x86_64
 
 BuildRequires:  python-setuptools >= 11.0
 BuildRequires:  gcc >= 4.0
