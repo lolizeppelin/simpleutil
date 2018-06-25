@@ -1,5 +1,4 @@
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)"
-)}
+%{!?python_sitearch: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib(1)")}
 
 %define proj_name simpleutil
 
@@ -14,7 +13,7 @@ License:        MPLv1.1 or GPLv2
 URL:            http://github.com/Lolizeppelin/%{proj_name}
 Source0:        %{proj_name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildArch:      noarch
+BuildArch:      x86_64
 
 BuildRequires:  python-setuptools >= 11.0
 BuildRequires:  gcc >= 4.0
@@ -50,7 +49,7 @@ utils copy from openstack
 rm -rf %{proj_name}.egg-info
 
 %build
-%{__python} setup.py build
+CFLAGS="$RPM_OPT_FLAGS" %{__python} setup.py build
 
 %install
 %{__rm} -rf %{buildroot}
@@ -62,9 +61,9 @@ rm -rf %{proj_name}.egg-info
 
 %files
 %defattr(-,root,root,-)
-%{python_sitelib}/%{proj_name}/*
-%{python_sitelib}/%{proj_name}-%{version}-*.egg-info/*
-%dir %{python_sitelib}/%{proj_name}-%{version}-*.egg-info/
+%{python_sitearch}/%{proj_name}/*
+%{python_sitearch}/%{proj_name}-%{version}-*.egg-info/*
+%dir %{python_sitearch}/%{proj_name}-%{version}-*.egg-info/
 %doc README.rst
 %doc doc/*
 
