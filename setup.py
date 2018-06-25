@@ -14,7 +14,7 @@ f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
 long_description = f.read()
 f.close()
 
-cutils = Extension('_simplecutils', sources=['libs/_cutils.c'])
+cutils = Extension('simpleutil.utils._cutils', sources=['libs/_cutils.c'])
 
 setup(
     ext_modules=[cutils],

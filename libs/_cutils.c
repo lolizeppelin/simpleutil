@@ -148,7 +148,7 @@ static PyMethodDef bitMapMethods[] = {
 
 static PyTypeObject _bitMap_Type = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "_simplecutils.bitMap",   /*tp_name*/
+    "_cutils.bitMap",   /*tp_name*/
     sizeof(_bitMapObject),     /*tp_basicsize*/
     0,                         /*tp_itemsize*/
     (destructor)bitmap_dealloc,            /*tp_dealloc*/
@@ -204,9 +204,9 @@ static PyMethodDef CutilsMethods[] = {
 
 
 PyMODINIT_FUNC
-init_simplecutils(void){
+init_cutils(void){
     PyObject *dict, *module;
-    module = Py_InitModule3("_simplecutils", CutilsMethods, "C utils for get monotonic and get a bitmap");
+    module = Py_InitModule3("_cutils", CutilsMethods, "C utils for get monotonic and get a bitmap");
     if (!module) return; /* this really should never happen */
 
     _bitMap_Type.ob_type = &PyType_Type;
@@ -222,7 +222,7 @@ init_simplecutils(void){
     error:
         if (PyErr_Occurred()) {
             PyErr_SetString(PyExc_ImportError,
-                    "_simplecutils: init failed");
+                    "_cutils: init failed");
             module = NULL;
         }
 }
