@@ -34,7 +34,6 @@ static PyObject *bitmap_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 
-
 static int bitmap_init(_bitMapObject *self, PyObject *args, PyObject *kwds)
 {
     unsigned long max;
@@ -76,6 +75,7 @@ static PyMemberDef bitMapMembers[] = {
 	{"max", T_ULONG, offsetof(_bitMapObject, _max), READONLY, "Max value of bitmap"},
 	{NULL} /* Sentinel */
 };
+
 
 static PyObject *bitmap_add(_bitMapObject *self, PyObject *args)
 {
@@ -207,7 +207,7 @@ static PyObject *Cmonotonic(PyObject *self, PyObject *args) {
 }
 
 
-static PyMethodDef CutilsMethods[] = {
+static PyMethodDef CutilsFunctions[] = {
     {"monotonic", (PyCFunction)Cmonotonic, METH_NOARGS, "Get millisecond with options CLOCK_MONOTONIC"},
     {NULL, NULL},  /* sentinel */
 };
@@ -220,12 +220,12 @@ init_cutils(void){
 
     if (PyType_Ready(&_bitMap_Type) < 0) goto error;
 
-    module = Py_InitModule3("_cutils", CutilsMethods, "C utils for function monotonic and class of bitmap");
+    module = Py_InitModule3("_cutils", CutilsFunctions, "C utils for function monotonic and class of bitmap");
     if (module == NULL) goto error;
 
-    _bitMap_Type.ob_type = &PyType_Type;
-    _bitMap_Type.tp_alloc = PyType_GenericAlloc;
-    _bitMap_Type.tp_new = PyType_GenericNew;
+//    _bitMap_Type.ob_type = &PyType_Type;
+//    _bitMap_Type.tp_alloc = PyType_GenericAlloc;
+//    _bitMap_Type.tp_new = PyType_GenericNew;
 
 	Py_INCREF(&_bitMap_Type);
 	PyModule_AddObject(module, "bitMap", (PyObject *)&_bitMap_Type);
