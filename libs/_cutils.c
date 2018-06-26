@@ -119,7 +119,6 @@ static PyObject *bitmap_has(_bitMapObject *self, PyObject *args)
     } else {
         unsigned long index = input /self->_size;
         unsigned long value = (unsigned long)1 << (input % self->_size);
-        unsigned long index = value/self->_size;
         if ((((unsigned long *)self->_map_array)[index] & value) > 0) success = 1;
     }
     return Py_BuildValue("H", success);
@@ -209,7 +208,7 @@ static PyObject *Cmonotonic(PyObject *self, PyObject *args) {
 
 
 static PyMethodDef CutilsMethods[] = {
-    {"monotonic", (PyCFunction)Cmonotonic, METH_NOARGS, "Get millisecond by CLOCK_MONOTONIC"},
+    {"monotonic", (PyCFunction)Cmonotonic, METH_NOARGS, "Get millisecond with options CLOCK_MONOTONIC"},
     {NULL, NULL},  /* sentinel */
 };
 
@@ -221,7 +220,7 @@ init_cutils(void){
 
     if (PyType_Ready(&_bitMap_Type) < 0) goto error;
 
-    module = Py_InitModule3("_cutils", CutilsMethods, "C utils for get monotonic and get a bitmap");
+    module = Py_InitModule3("_cutils", CutilsMethods, "C utils for function monotonic and class of bitmap");
     if (module == NULL) goto error;
 
     _bitMap_Type.ob_type = &PyType_Type;
