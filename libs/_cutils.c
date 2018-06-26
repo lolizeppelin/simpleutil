@@ -44,7 +44,7 @@ static int bitmap_init(_bitMapObject *self, PyObject *args, PyObject *kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "k", kwlist, &max)) goto error;
 
-    if (max >= MAXINT) {
+    if (max > MAXINT) {
         size = 64;
         unsigned long *arrays;
         arrays = (unsigned long *)malloc(sizeof(unsigned long)*(max/size + 1));
@@ -93,7 +93,7 @@ static PyObject *bitmap_add(_bitMapObject *self, PyObject *args)
     } else {
         unsigned long value = input;
         unsigned long index = value/self->_size;
-        ((long *)self->_map_array)[index] |= (1 << (value % self->_size));
+        ((long *)self->_map_array)[index] |= ((unsigned long)1 << (value % self->_size));
     }
 
 	Py_INCREF(Py_None);
@@ -113,11 +113,12 @@ static PyObject *bitmap_has(_bitMapObject *self, PyObject *args)
     }
 
     if (self->_size < 64) {
+        unsigned int index = (unsigned int)input / self->_size;
         unsigned int value = 1 << ((unsigned int)input % self->_size);
-        unsigned int index = value/self->_size;
         if ((((unsigned long *)self->_map_array)[index] & value) > 0) success = 1;
     } else {
-        unsigned long value = 1 << (input % self->_size);
+        unsigned long index = input /self->_size;
+        unsigned long value = (unsigned long)1 << (input % self->_size);
         unsigned long index = value/self->_size;
         if ((((unsigned long *)self->_map_array)[index] & value) > 0) success = 1;
     }
