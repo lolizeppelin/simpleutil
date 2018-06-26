@@ -115,7 +115,7 @@ static PyObject *bitmap_has(_bitMapObject *self, PyObject *args)
     if (self->_size < 64) {
         unsigned int index = (unsigned int)input / self->_size;
         unsigned int value = 1 << ((unsigned int)input % self->_size);
-        if ((((unsigned long *)self->_map_array)[index] & value) > 0) success = 1;
+        if ((((unsigned int *)self->_map_array)[index] & value) > 0) success = 1;
     } else {
         unsigned long index = input /self->_size;
         unsigned long value = (unsigned long)1 << (input % self->_size);
