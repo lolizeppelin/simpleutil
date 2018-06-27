@@ -21,8 +21,6 @@ import time
 import datetime
 import ntplib
 # import sys
-import ctypes
-import ctypes.util
 
 from simpleutil.utils import systemutils
 from simpleutil.utils import reflection
@@ -39,6 +37,7 @@ ntpclinet = ntplib.NTPClient()
 
 # copy from monotonic
 if systemutils.WINDOWS:
+    import ctypes
     kernel32 = ctypes.windll.kernel32
     GetTickCount64 = getattr(kernel32, 'GetTickCount64', None)
     if GetTickCount64:
@@ -54,10 +53,12 @@ else:
     try:
         from simpleutil.utils import _cutils
 
-
         def monotonic():
             return _cutils.monotonic()
     except ImportError:
+        import ctypes
+        import ctypes.util
+
         try:
             clock_gettime = ctypes.CDLL(ctypes.util.find_library('c'),
                                         use_errno=True).clock_gettime
@@ -65,12 +66,10 @@ else:
             clock_gettime = ctypes.CDLL(ctypes.util.find_library('rt'),
                                         use_errno=True).clock_gettime
 
-
         class timespec(ctypes.Structure):
             """Time specification, as described in clock_gettime(3)."""
             _fields_ = (('tv_sec', ctypes.c_long),
                         ('tv_nsec', ctypes.c_long))
-
 
         # if sys.platform.startswith('linux'):
         if systemutils.LINUX:
