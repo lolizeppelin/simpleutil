@@ -7,7 +7,7 @@ try:
         def __init__(self, max):
             if max <= 0:
                 raise ValueError('Bit map init value error')
-            super(_cutils.bitMap, self).__init__(max)
+            _cutils.bitMap.__init__(self, max)
 
         def add(self, num):
             assert num > 0 and num <= self.max
@@ -15,10 +15,10 @@ try:
 
         def has(self, num):
             assert num > 0 and num <= self.max
-            return _cutils.bitMap.has(self, num)
+            return _cutils.bitMap.has(self, num) > 0
 
         def all(self, reverse=False):
-            return self.small2big() if reverse else self.big2small()
+            return self.big2small() if reverse else self.small2big()
 
         def big2small(self):
             length = int(self.max / self.size) + 1
@@ -55,7 +55,7 @@ except ImportError:
             return (self.array[num / self.size] & (1 << (num % self.size)) > 0)
 
         def all(self, reverse=False):
-            return self.small2big() if reverse else self.big2small()
+            return self.big2small() if reverse else self.small2big()
 
         def big2small(self):
             for index in xrange(len(self.array) - 1, -1, -1):
