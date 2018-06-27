@@ -1,21 +1,22 @@
 try:
     from simpleutil.utils import _cutils
 
-
     class BitMap(_cutils.bitMap):
         """Bit map from _cutils"""
 
         def __init__(self, max):
-            if max <= 0:
+            if max <= 0 or max >= 1 << 64:
                 raise ValueError('Bit map init value error')
             _cutils.bitMap.__init__(self, max)
 
         def add(self, num):
-            assert num > 0 and num <= self.max
+            if num < 0 or num > self.max:
+                raise ValueError('Value over range')
             _cutils.bitMap.add(self, num)
 
         def has(self, num):
-            assert num > 0 and num <= self.max
+            if num < 0 or num > self.max:
+                raise ValueError('Value over range')
             return _cutils.bitMap.has(self, num) > 0
 
         def all(self, reverse=False):
@@ -42,18 +43,20 @@ except ImportError:
         """Bit map native"""
 
         def __init__(self, max):
-            if max <= 0:
+            if max <= 0 or max >= 1 << 64:
                 raise ValueError('Bit map init value error')
             self.max = max
             self.size = 64 if max >= (1 << 32) else 32
             self.array = [0] * (int(max / self.size) + 1)
 
         def add(self, num):
-            assert num > 0 and num <= self.max
+            if num < 0 or num > self.max:
+                raise ValueError('Value over range')
             self.array[num / self.size] |= (1 << (num % self.size))
 
         def has(self, num):
-            assert num > 0 and num <= self.max
+            if num < 0 or num > self.max:
+                raise ValueError('Value over range')
             return (self.array[num / self.size] & (1 << (num % self.size)) > 0)
 
         def all(self, reverse=False):
