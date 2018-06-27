@@ -3,6 +3,7 @@ try:
 
 
     class BitMap(_cutils.bitMap):
+        """Bit map from _cutils"""
 
         def __init__(self, max):
             if max <= 0:
@@ -38,6 +39,7 @@ try:
 except ImportError:
 
     class BitMap(object):
+        """Bit map native"""
 
         def __init__(self, max):
             if max <= 0:
