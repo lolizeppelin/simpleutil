@@ -54,6 +54,7 @@ if POSIX:
     DU = find_executable('du')
 
     def directory_size(path, excludes=None, timeout=None):
+        # TODO rewrite with C
         args = [DU, '-sk']
         if excludes:
             if isinstance(excludes, basestring):
