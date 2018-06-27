@@ -200,10 +200,10 @@ static PyTypeObject _bitMap_Type = {
 
 static PyObject *Cmonotonic(PyObject *self, PyObject *args) {
     struct timespec ts;
-    PyObject* millisecond;
+    PyObject* seconds;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    millisecond = Py_BuildValue("k", ts.tv_sec*1000 + ts.tv_nsec / 1000000);
-    return millisecond;
+    seconds = Py_BuildValue("f", (float)ts.tv_sec + (float)ts.tv_nsec / 1000000000.0);
+    return seconds;
 }
 
 

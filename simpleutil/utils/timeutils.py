@@ -52,36 +52,46 @@ if systemutils.WINDOWS:
         raise RuntimeError
 else:
     try:
-        clock_gettime = ctypes.CDLL(ctypes.util.find_library('c'),
-                                    use_errno=True).clock_gettime
-    except AttributeError:
-        clock_gettime = ctypes.CDLL(ctypes.util.find_library('rt'),
-                                    use_errno=True).clock_gettime
+        from simpleutil.utils import _cutils
 
-    class timespec(ctypes.Structure):
-        """Time specification, as described in clock_gettime(3)."""
-        _fields_ = (('tv_sec', ctypes.c_long),
-                    ('tv_nsec', ctypes.c_long))
 
-    # if sys.platform.startswith('linux'):
-    if systemutils.LINUX:
-        CLOCK_MONOTONIC = 1
-    if systemutils.FREEBSD:
-        CLOCK_MONOTONIC = 4
-    if systemutils.SUNOS:
-        CLOCK_MONOTONIC = 4
-    if systemutils.BSD:
-        CLOCK_MONOTONIC = 3
-    if systemutils.AIX:
-        CLOCK_MONOTONIC = ctypes.c_longlong(10)
+        def monotonic():
+            return _cutils.monotonic()
+    except ImportError:
+        try:
+            clock_gettime = ctypes.CDLL(ctypes.util.find_library('c'),
+                                        use_errno=True).clock_gettime
+        except AttributeError:
+            clock_gettime = ctypes.CDLL(ctypes.util.find_library('rt'),
+                                        use_errno=True).clock_gettime
 
-    def monotonic():
-        """Monotonic clock, cannot go backward."""
-        ts = timespec()
-        if clock_gettime(CLOCK_MONOTONIC, ctypes.pointer(ts)):
-            errno = ctypes.get_errno()
-            raise OSError(errno, os.strerror(errno))
-        return ts.tv_sec + ts.tv_nsec / 1.0e9
+
+        class timespec(ctypes.Structure):
+            """Time specification, as described in clock_gettime(3)."""
+            _fields_ = (('tv_sec', ctypes.c_long),
+                        ('tv_nsec', ctypes.c_long))
+
+
+        # if sys.platform.startswith('linux'):
+        if systemutils.LINUX:
+            CLOCK_MONOTONIC = 1
+        if systemutils.FREEBSD:
+            CLOCK_MONOTONIC = 4
+        if systemutils.SUNOS:
+            CLOCK_MONOTONIC = 4
+        if systemutils.BSD:
+            CLOCK_MONOTONIC = 3
+        if systemutils.AIX:
+            CLOCK_MONOTONIC = ctypes.c_longlong(10)
+
+
+        def monotonic():
+            """Monotonic clock, cannot go backward."""
+            ts = timespec()
+            if clock_gettime(CLOCK_MONOTONIC, ctypes.pointer(ts)):
+                errno = ctypes.get_errno()
+                raise OSError(errno, os.strerror(errno))
+            return ts.tv_sec + ts.tv_nsec / 1.0e9
 
 if monotonic() - monotonic() > 0:
     raise ValueError('monotonic() is not monotonic!')
