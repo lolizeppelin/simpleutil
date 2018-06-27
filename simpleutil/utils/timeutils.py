@@ -54,7 +54,7 @@ else:
         from simpleutil.utils import _cutils
 
         def monotonic():
-            """Time specification, run clock_gettime by _cutils"""
+            """Monotonic clock, cannot go backward. get value by _cutils"""
             return _cutils.monotonic()
     except ImportError:
         import ctypes
