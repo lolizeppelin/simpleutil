@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
-import ctypes
-import subprocess
+import time
 from simpleutil.utils import strutils
 from simpleutil.utils.systemutils.public import *
 
@@ -12,7 +11,17 @@ SYSENCODE = sys.getfilesystemencoding()
 PID = 0
 
 
+def touch(path):
+    mtime = os.stat(path).st_mtime
+    os.utime(path, (int(time.time()), int(mtime)))
+
+
+def acctime(path):
+    return int(os.stat(path).st_atime)
+
+
 if POSIX:
+    import subprocess
     from simpleutil.utils.systemutils.posix import set_cloexec_flag
 
     if LINUX:
@@ -82,6 +91,7 @@ if POSIX:
         return int(strutils.Split(buffer)[0])*1024
 
 elif WINDOWS:
+    import ctypes
     import win32com.client
 
     umask = empty_context
