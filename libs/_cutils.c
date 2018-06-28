@@ -6,8 +6,8 @@
 //unsigned long MAXINT = ((unsigned long)1 << 32) - 1;
 
 typedef struct {
-	PyObject_HEAD
-//	PyObject_VAR_HEAD
+    PyObject_HEAD
+//  PyObject_VAR_HEAD
     unsigned int _size;
     unsigned long _max;
     void *_map_array;
@@ -71,9 +71,9 @@ static int bitmap_init(_bitMapObject *self, PyObject *args, PyObject *kwds)
 
 
 static PyMemberDef bitMapMembers[] = {
-	{"size", T_UINT, offsetof(_bitMapObject, _size), READONLY, "Pre size bitmap"},
-	{"max", T_ULONG, offsetof(_bitMapObject, _max), READONLY, "Max value of bitmap"},
-	{NULL} /* Sentinel */
+    {"size", T_UINT, offsetof(_bitMapObject, _size), READONLY, "Pre size bitmap"},
+    {"max", T_ULONG, offsetof(_bitMapObject, _max), READONLY, "Max value of bitmap"},
+    {NULL} /* Sentinel */
 };
 
 
@@ -96,8 +96,8 @@ static PyObject *bitmap_add(_bitMapObject *self, PyObject *args)
         ((long *)self->_map_array)[index] |= ((unsigned long)1 << (value % self->_size));
     }
 
-	Py_INCREF(Py_None);
-	return Py_None;
+    Py_INCREF(Py_None);
+    return Py_None;
 }
 
 
@@ -227,8 +227,8 @@ init_cutils(void){
 //    _bitMap_Type.tp_alloc = PyType_GenericAlloc;
 //    _bitMap_Type.tp_new = PyType_GenericNew;
 
-	Py_INCREF(&_bitMap_Type);
-	PyModule_AddObject(module, "bitMap", (PyObject *)&_bitMap_Type);
+    Py_INCREF(&_bitMap_Type);
+    PyModule_AddObject(module, "bitMap", (PyObject *)&_bitMap_Type);
 
     error:
         if (PyErr_Occurred()) {
