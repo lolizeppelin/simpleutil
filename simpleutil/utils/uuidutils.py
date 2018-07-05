@@ -1,8 +1,6 @@
 import time
 import uuid
 
-from simpleutil.utils.timeutils import realnow
-
 def generate_uuid():
     """Creates a random uuid string.
 
@@ -73,22 +71,23 @@ class Gprimarykey(object):
         """Make a global primark key"""
         if pid >= 256 or sid >= 2048:
             raise RuntimeError('sid should less then 2048 pid should less then 256')
-        cur = int(realnow()*1000)
+        cur = int(time.time() * 1000)
         if self.__last == cur:
             if self.__sequence >= 8:
                 time.sleep(0.001)
                 # recursive call
                 return self.makekey(sid, pid)
-            self.__sequence += 1
+            else:
+                self.__sequence += 1
         else:
             self.__sequence = 0
             self.__last = cur
-            # over time at 4398046511103 == 2109-05-15 15:35:11
-            part_time = cur << 22
-            part_server = sid << 11
-            part_pid = pid << 3
-            key = part_time | part_server | part_pid | self.__sequence
-            return key
+        # over time at 4398046511103 == 2109-05-15 15:35:11
+        part_time = cur << 22
+        part_server = sid << 11
+        part_pid = pid << 3
+        key = part_time | part_server | part_pid | self.__sequence
+        return key
 
     def timeformat(self, key):
         return key >> 22
