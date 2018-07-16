@@ -36,7 +36,6 @@ def strmd5(buffer):
     return md5_instance.hexdigest()
 
 
-
 def filecrc32(path):
     with openfile(path) as f:
         bytes = f.read(BLOCK)
