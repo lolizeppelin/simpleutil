@@ -57,6 +57,7 @@ def async_compress(src, dst, topdir=True,
     压缩至文件,需要传输到流中需要使用其他recv
     @param src:             压缩源文件/文件夹
     @param dst:             压缩输出文件
+    @param topdir:          是否包含目标文件夹,未否只包含src文件夹下的内容
     @param exclude:         压缩排除文件,callable
     @param native:          是否使用python原生代码压缩,速度慢,但是排除支持较好
     @param timeout:         超时时间

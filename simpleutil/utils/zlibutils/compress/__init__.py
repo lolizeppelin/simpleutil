@@ -89,6 +89,7 @@ class Adapter(object):
 
 
 class GzCompress(ImplCompress):
+
     def __init__(self, path):
         super(GzCompress, self).__init__(path)
         self.gzobj = None
@@ -215,8 +216,14 @@ class NativeAdapter(Adapter):
                 # close fd exclude file object fd
                 os.closerange(3, fileobj.fileno())
                 os.closerange(fileobj.fileno() + 1, systemutils.MAXFD)
-                self.comprer.compress(fileobj, topdir, exclude, timeout)
-                os._exit(0)
+                try:
+                    self.comprer.compress(fileobj, topdir, exclude, timeout)
+                    fileobj.flush()
+                    fileobj.close()
+                except Exception:
+                    os._exit(1)
+                else:
+                    os._exit(0)
             else:
                 from simpleutil.utils.systemutils import posix
                 posix.wait(pid, timeout)
