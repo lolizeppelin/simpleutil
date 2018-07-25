@@ -44,7 +44,7 @@ def async_extract(src, dst,
     if not os.path.isdir(dst):
         raise RuntimeError('Destination is not folder')
     if exclude is not None and not isinstance(exclude, Excluder):
-        raise TypeError('Exclude not type of Excluder')
+        raise TypeError('Extract exclude not type of Excluder')
     extracter = Extract(src, native, exclude, fork, prefunc)
     executor = GreenThreadPoolExecutor(max_workers=1)
     return Waiter(ft=executor.submit(extracter.extractall, dst, timeout),
@@ -65,7 +65,7 @@ def async_compress(src, dst, topdir=True,
     @raise TypeError:       压缩方式不支持
     """
     if exclude is not None and not isinstance(exclude, Excluder):
-        raise TypeError('Exclude not type of Excluder')
+        raise TypeError('Compress exclude not type of Excluder')
     timeout = float(timeout) if timeout else None
     compretype = os.path.splitext(dst)[1][1:]
     comptyper = ZlibStream(src, compretype, native, exclude, fork, prefunc)
