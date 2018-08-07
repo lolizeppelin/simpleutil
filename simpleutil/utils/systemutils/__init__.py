@@ -22,18 +22,23 @@ def acctime(path):
 
 if POSIX:
     import subprocess
-    from simpleutil.utils.systemutils.posix import set_cloexec_flag
+    from simpleutil.utils.systemutils import posix
+
+    is_admin = posix.is_admin
+    run_as_admin = posix.run_as_admin
 
     if LINUX:
-        from simpleutil.utils.systemutils.posix.linux import umask
-        from simpleutil.utils.systemutils.posix.linux import chmod
-        from simpleutil.utils.systemutils.posix.linux import chown
-        from simpleutil.utils.systemutils.posix.linux import drop_user
-        from simpleutil.utils.systemutils.posix.linux import drop_group
-        from simpleutil.utils.systemutils.posix.linux import prepare_user
-        from simpleutil.utils.systemutils.posix.linux import drop_privileges
-        from simpleutil.utils.systemutils.posix.linux import unlimit_core
-        from simpleutil.utils.systemutils.posix.linux import open_file_limit
+        from simpleutil.utils.systemutils.posix import linux
+
+        umask = linux.umask
+        chmod = linux.chmod
+        chown = linux.chown
+        drop_user = linux.drop_user
+        drop_group = linux.drop_group
+        prepare_user = linux.prepare_user
+        drop_privileges = linux.drop_privileges
+        unlimit_core = linux.unlimit_core
+        open_file_limit = linux.open_file_limit
     else:
         umask = empty_context
         chmod = empty
@@ -72,11 +77,11 @@ if POSIX:
                 args.append('--exclude=%s' % exclude)
         args.append(path)
         r, w = os.pipe()
-        set_cloexec_flag(r)
-        set_cloexec_flag(w)
+        posix.set_cloexec_flag(r)
+        posix.set_cloexec_flag(w)
         with open(os.devnull, 'wb') as null:
-            sub = subprocess.Popen(executable=DU, args=args, stdout=w, stderr=null.fileno(),
-                                   close_fds=False)
+            sub = subprocess.Popen(executable=DU, args=args, stdout=w,
+                                   stderr=null.fileno(), close_fds=True)
         os.close(w)
         try:
             subwait(sub, timeout)
@@ -87,12 +92,10 @@ if POSIX:
             os.close(r)
             raise
         with os.fdopen(r, 'rb') as f:
-            buffer = f.read(512)
-        return int(strutils.Split(buffer)[0])*1024
+            return int(strutils.Split(f.read(512))[0]) * 1024
 
 elif WINDOWS:
-    import ctypes
-    import win32com.client
+    from simpleutil.utils.systemutils import windows
 
     umask = empty_context
     chmod = empty
@@ -104,31 +107,11 @@ elif WINDOWS:
     unlimit_core = empty
     open_file_limit = empty
 
-    def get_partion_free_bytes(folder):
-        """ Return folder/drive free space (in bytes)
-        """
-        free_bytes = ctypes.c_ulonglong(0)
-        ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(folder), None, None,
-                                                   ctypes.pointer(free_bytes))
-        return free_bytes.value
+    get_partion_free_bytes = windows.get_partion_free_bytes
+    directory_size = windows.directory_size
 
-    def directory_size(path, excludes=None, timeout=None):
-        fso = win32com.client.Dispatch("Scripting.FileSystemObject")
-        folder = fso.GetFolder(path)
-        rootsize = folder.Size
-        if excludes:
-            if isinstance(excludes, basestring):
-                excludes = [excludes, ]
-            for exclude in excludes:
-                exclude = os.path.join(path, exclude)
-                if not os.path.exists(exclude):
-                    continue
-                if os.path.isfile(exclude):
-                    rootsize -= os.path.getsize(exclude)
-                else:
-                    folder = fso.GetFolder(exclude)
-                    rootsize -= folder.Size
-        return rootsize
+    is_admin = windows.is_admin
+    run_as_admin = windows.run_as_admin
 
 else:
     raise RuntimeError('System type unkonwn')

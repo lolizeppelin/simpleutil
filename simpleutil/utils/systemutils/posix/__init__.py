@@ -1,4 +1,5 @@
 import os
+import sys
 import fcntl
 import errno
 import signal
@@ -52,3 +53,12 @@ def wait(pid, timeout=None):
             if exc.errno not in (errno.EINTR, errno.ECHILD):
                 raise OSError('waitpid get errno %d' % exc.errno)
             continue
+
+
+def is_admin():
+    return os.getuid() == 0
+
+
+def run_as_admin():
+    if not is_admin():
+        raise RuntimeError('User is not admin run with sudo please')
