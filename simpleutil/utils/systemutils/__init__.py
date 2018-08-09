@@ -26,6 +26,7 @@ if POSIX:
 
     is_admin = posix.is_admin
     run_as_admin = posix.run_as_admin
+    set_cloexec_flag = posix.set_cloexec_flag
 
     if LINUX:
         from simpleutil.utils.systemutils.posix import linux
@@ -106,12 +107,14 @@ elif WINDOWS:
     drop_privileges = empty
     unlimit_core = empty
     open_file_limit = empty
+    set_cloexec_flag = empty
 
     get_partion_free_bytes = windows.get_partion_free_bytes
     directory_size = windows.directory_size
 
     is_admin = windows.is_admin
     run_as_admin = windows.run_as_admin
+
 
 else:
     raise RuntimeError('System type unkonwn')
