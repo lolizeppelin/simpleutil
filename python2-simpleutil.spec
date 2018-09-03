@@ -15,7 +15,7 @@ Source0:        %{proj_name}-%{version}.tar.gz
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:      x86_64
 
-BuildRequires:  python-setuptools >= 11.0
+BuildRequires:  python-setuptools >= 11.3
 BuildRequires:  gcc >= 4.0
 BuildRequires:  python-devel >= 2.6.6
 BuildRequires:  python-devel < 3.0
