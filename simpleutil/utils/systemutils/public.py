@@ -49,7 +49,7 @@ def empty_context(*args, **kwargs):
 def find_executable(executable):
     if os.path.exists(executable):
         if not os.path.isfile(executable):
-            raise
+            raise NotImplementedError('%s can not execute' % executable)
         return os.path.abspath(executable)
     if WINDOWS:
         if not executable.endswith(('.exe', '.EXE')):
