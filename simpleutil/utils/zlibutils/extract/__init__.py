@@ -7,6 +7,8 @@ import zipfile
 import subprocess
 import time
 
+import eventlet
+
 from simpleutil.utils import systemutils
 
 UNZIP = systemutils.find_executable('unzip')
@@ -40,6 +42,11 @@ class NativeTarFile(tarfile.TarFile):
                 continue
             self.extract(tarinfo, dst)
 
+    @staticmethod
+    def iterfile(tarfileobj):
+        for tarinfo in tarfileobj:
+            yield tarinfo.name
+
 
 class NativeZipFile(zipfile.ZipFile):
     """native zipfile"""
@@ -62,6 +69,11 @@ class NativeZipFile(zipfile.ZipFile):
                 continue
             self.extract(zipinfo, dst, None)
 
+    @staticmethod
+    def iterfile(zipfileobj):
+        for zipinfo in zipfileobj.filelist:
+            yield zipinfo.filename
+
 
 @six.add_metaclass(abc.ABCMeta)
 class Adapter(object):
@@ -77,8 +89,14 @@ class Adapter(object):
     def cancel(self):
         """cancel extractall"""
 
+    @abc.abstractmethod
+    def iterfile(self, max):
+        """iter file from zip file"""
+        yield
+
 
 class ShellAdapter(Adapter):
+
     def __init__(self, src, compretype, exclude, prefunc):
         super(ShellAdapter, self).__init__(src)
         self.compretype = compretype
@@ -127,9 +145,98 @@ class ShellAdapter(Adapter):
         systemutils.subwait(self.sub, timeout)
         self.sub = None
 
+    @staticmethod
+    def command_build_ltar(src):
+        if TAR:
+            ARGS = [TAR, '-tf', src]
+            return TAR, ARGS
+        raise NotImplementedError('can not find tar')
+
+    @staticmethod
+    def command_build_lzip(src):
+        if UNZIP:
+            ARGS = [UNZIP, '-l', src]
+            return UNZIP, ARGS
+        return NotImplementedError('can not unzip')
+
+    @staticmethod
+    def build_command_list(compretype, src):
+        if compretype == 'tar':
+            return ShellAdapter.command_build_ltar(src)
+        elif compretype == 'zip':
+            return ShellAdapter.command_build_lzip(src)
+        else:
+            raise TypeError('Can not extract for %s' % compretype)
+
+    def listfiles(self):
+        r, w = os.pipe()
+        executable, args = ShellAdapter.build_command_list(self.compretype, self.src)
+        self.sub = subprocess.Popen(args, executable=executable,
+                                    stdout=w, close_fds=True, preexec_fn=self.prefunc)
+        os.close(w)
+        return r
+
+    @staticmethod
+    def formatline(line):
+        pass
+
     def cancel(self):
         if self.sub:
             self.sub.kill()
+
+    def iterfile(self, max):
+        """iter file from zip file"""
+        count = 0
+        if self.compretype == 'zip':
+
+            def _format(l):      # unzip -l need format line
+                return l
+        else:
+            _format = lambda x: x.rstrip('\r')
+
+        fd = self.listfiles()
+
+        def _wait():
+            try:
+                systemutils.subwait(self.sub)
+            finally:
+                self.sub = None
+
+        green = eventlet.spawn(_wait)
+
+        halfline = ''
+        try:
+            while True:
+                buff = os.read(fd, 4096)
+                if not buff:        # sub process has been exit
+                    break
+                else:
+                    line = halfline + buff
+                    lines = line.split('\n')
+                    if line[-1] != '\n':
+                        halfline = lines[-1]
+                        lines.pop(-1)
+                    for rawline in lines:
+                        try:
+                            line = _format(rawline)
+                            if line:
+                                count += 1
+                                if count >= max:
+                                    raise ValueError('File number over max')
+                                yield line
+                        except Exception:
+                            self.cancel()
+                            raise
+            green.wait()
+            if halfline:
+                line = _format(halfline)
+                if line:
+                    count += 1
+                    if count >= max:
+                        raise ValueError('File number over max')
+                    yield line
+        finally:
+            os.close(fd)
 
 
 class NativeAdapter(Adapter):
@@ -173,8 +280,19 @@ class NativeAdapter(Adapter):
         if self.pid:
             os.kill(self.pid, signal.SIGKILL)
 
+    def iterfile(self, max):
+        """iter file from zip file"""
+        count = 0
+        with self.native_cls.native_open(self.src) as ex:
+            for filename in ex.iterfile(ex):
+                count += 1
+                if count >= max:
+                    raise ValueError('File number over max')
+                yield filename
+
 
 class Extract(object):
+
     def __init__(self, src, native=False, exclude=None, fork=None, prefunc=None):
         if fork and not systemutils.POSIX:
             raise TypeError('Can not fork on windows system')
@@ -203,3 +321,8 @@ class Extract(object):
 
     def cancel(self):
         self.adapter.cancel()
+
+    def iterfile(self, max):
+        if not self.native and systemutils.WINDOWS:
+            raise TypeError('Shell iter file Not for windows')
+        return self.adapter.iterfile(max)

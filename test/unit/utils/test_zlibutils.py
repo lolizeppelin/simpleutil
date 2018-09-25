@@ -47,27 +47,34 @@ def clean(path):
 
 
 def main():
-    empty_dir = r'C:\Users\loliz_000\Desktop\empty'
-    source_dir = r'C:\Users\loliz_000\Desktop\etc'
-    gz_file = r'C:\Users\loliz_000\Desktop\1.tar.gz'
-    zip_file = r'C:\Users\loliz_000\Desktop\1.zip'
-    cachefile_recver(source_dir, gz_file)
-    cachefile_recver(source_dir, zip_file)
-
-    clean(empty_dir)
-    w1 = zlibutils.async_extract(gz_file, empty_dir, native=True)
-    clean(empty_dir)
-    w2 = zlibutils.async_extract(gz_file, empty_dir, native=False)
-    clean(empty_dir)
-    w3 = zlibutils.async_extract(zip_file, empty_dir, native=True)
-    clean(empty_dir)
-    w4 = zlibutils.async_extract(zip_file, empty_dir, native=False)
+    empty_dir = r'C:\Users\gcy\Desktop\ziptest\empty'
+    source_dir = r'C:\Users\gcy\Desktop\ziptest\etc'
+    gz_file = r'C:\Users\gcy\Desktop\ziptest\1.tar.gz'
+    zip_file = r'C:\Users\gcy\Desktop\ziptest\1.zip'
+    # cachefile_recver(source_dir, gz_file)
+    # cachefile_recver(source_dir, zip_file)
+    #
     # clean(empty_dir)
+    # w1 = zlibutils.async_extract(gz_file, empty_dir, native=True)
+    # clean(empty_dir)
+    # w2 = zlibutils.async_extract(gz_file, empty_dir, native=False)
+    # clean(empty_dir)
+    # w3 = zlibutils.async_extract(zip_file, empty_dir, native=True)
+    # clean(empty_dir)
+    # w4 = zlibutils.async_extract(zip_file, empty_dir, native=False)
+    # # clean(empty_dir)
+    #
+    # w1.wait()
+    # w2.wait()
+    # w3.wait()
+    # w4.wait()
 
-    w1.wait()
-    w2.wait()
-    w3.wait()
-    w4.wait()
+    # x = zlibutils.iter_files(gz_file, 500, native=True)
+    x = zlibutils.iter_files(zip_file, 3, native=True)
+    print type(x)
+    for f in x:
+        print f
+
 
 if __name__ == '__main__':
     main()
