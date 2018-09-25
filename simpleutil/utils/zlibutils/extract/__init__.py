@@ -227,7 +227,7 @@ class ShellAdapter(Adapter):
                             line = _format(rawline)
                             if line:
                                 count += 1
-                                if count >= max:
+                                if count > max:
                                     raise ValueError('File number over max')
                                 yield line
                         except Exception:
@@ -238,7 +238,7 @@ class ShellAdapter(Adapter):
                 line = _format(halfline)
                 if line:
                     count += 1
-                    if count >= max:
+                    if count > max:
                         raise ValueError('File number over max')
                     yield line
         finally:
@@ -292,7 +292,7 @@ class NativeAdapter(Adapter):
         with self.native_cls.native_open(self.src) as ex:
             for filename in ex.iterfile(ex):
                 count += 1
-                if count >= max:
+                if count > max:
                     raise ValueError('File number over max')
                 yield filename
 
