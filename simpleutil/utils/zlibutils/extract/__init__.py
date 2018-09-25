@@ -6,6 +6,7 @@ import tarfile
 import zipfile
 import subprocess
 import time
+import re
 
 import eventlet
 
@@ -14,6 +15,7 @@ from simpleutil.utils import systemutils
 UNZIP = systemutils.find_executable('unzip')
 TAR = systemutils.find_executable('tar')
 
+UNZIPLREGX = re.compile('^ +?[0-9]+? +?[0-9-]+? +?[0-9:]+? +?([\S]+?[\s\S]+?)$')
 
 class NativeTarFile(tarfile.TarFile):
     """native taifle"""
@@ -190,9 +192,13 @@ class ShellAdapter(Adapter):
         if self.compretype == 'zip':
 
             def _format(l):      # unzip -l need format line
-                return l
+                match = re.match(UNZIPLREGX, l)
+                if match:
+                    return match.group(1)
+                return ''
+                # parts = loli.split('')
         else:
-            _format = lambda x: x.rstrip('\r')
+            _format = lambda x: x
 
         fd = self.listfiles()
 
