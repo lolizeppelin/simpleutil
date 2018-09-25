@@ -157,6 +157,15 @@ def setuid(user_id_or_name):
         new_uid = int(user_id_or_name)
     except (TypeError, ValueError):
         new_uid = pwd.getpwnam(user_id_or_name).pw_uid
+
+    if new_uid == os.geteuid():
+        return
+
+    if os.geteuid() != 0:
+        msg = 'Root permissions are required to setuid.'
+        logging.critical(msg)
+        raise OSError(msg)
+
     if new_uid != 0:
         try:
             os.setuid(new_uid)
@@ -167,10 +176,20 @@ def setuid(user_id_or_name):
 
 
 def setgid(group_id_or_name):
+
     try:
         new_gid = int(group_id_or_name)
     except (TypeError, ValueError):
         new_gid = grp.getgrnam(group_id_or_name).gr_gid
+
+    if new_gid == os.getegid():
+        return
+
+    if os.geteuid() != 0:
+        msg = 'Root permissions are required to setgid.'
+        logging.critical(msg)
+        raise OSError(msg)
+
     if new_gid != 0:
         try:
             os.setgid(new_gid)
@@ -212,11 +231,6 @@ def drop_privileges(user=None, group=None):
     """Drop privileges to user/group privileges."""
     if user is None and group is None:
         return
-
-    if os.geteuid() != 0:
-        msg = 'Root permissions are required to drop privileges.'
-        logging.critical(msg)
-        raise OSError(msg)
 
     if group is not None:
         try:
