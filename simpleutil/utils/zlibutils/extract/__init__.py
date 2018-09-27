@@ -184,7 +184,10 @@ class ShellAdapter(Adapter):
 
     def cancel(self):
         if self.sub:
-            self.sub.kill()
+            try:
+                self.sub.kill()
+            except (OSError, IOError):
+                pass
 
     def iterfile(self, max):
         """iter file from zip file"""
@@ -213,7 +216,8 @@ class ShellAdapter(Adapter):
         halfline = ''
         try:
             while True:
-                buff = os.read(fd, 4096)
+                # buff = os.read(fd, 4096)
+                buff = os.read(fd, 1048576)
                 if not buff:        # sub process has been exit
                     break
                 else:
