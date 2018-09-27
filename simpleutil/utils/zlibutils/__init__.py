@@ -26,7 +26,7 @@ class Waiter(object):
         return self.ft.finished
 
 
-def iter_files(src, max, native=False):
+def iter_files(src, max=1000, native=False):
     """迭代器方式返回压缩包中文件"""
     extracter = Extract(src, native)
     return extracter.iterfile(max)

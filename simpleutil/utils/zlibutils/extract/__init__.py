@@ -229,10 +229,11 @@ class ShellAdapter(Adapter):
                                 count += 1
                                 if count > max:
                                     raise ValueError('File number over max')
-                                yield line
                         except Exception:
                             self.cancel()
                             raise
+                        if line:
+                            yield line
             green.wait()
             if halfline:
                 line = _format(halfline)
