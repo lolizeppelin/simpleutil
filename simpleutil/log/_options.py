@@ -34,6 +34,8 @@ DEFAULT_LOG_LEVELS = [
     'routes.middleware=WARN',
     'requests.packages.urllib3.connectionpool=WARN',
     'requests.packages.urllib3.util.retry=WARN',
+    'urllib3.connectionpool=WARN', 'urllib3.util.retry=WARN',
+    'websocket=WARN',
     'simpleutil=WARN',
     'simpleservice.wsgi.service=WARN',
     'simpleservice.ormdb.engines=WARN',

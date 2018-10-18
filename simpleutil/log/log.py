@@ -241,11 +241,19 @@ def register_options(conf):
 
 def setup(conf, product_name, version='unknown'):
     """Setup logging for the current application."""
+
+    # clean default stderr logging
+    for hd in logging.root.handlers:
+        logging.root.removeHandler(hd)
+
     if conf.log_config_append:
         _load_log_config(conf.log_config_append)
     else:
         _setup_logging_from_conf(conf, product_name, version)
     sys.excepthook = _create_logging_excepthook(product_name)
+
+    for name, adapter in six.iteritems(_loggers):
+        adapter.logger = logging.getLogger(name)
 
 
 def set_defaults(logging_context_format_string=None,
