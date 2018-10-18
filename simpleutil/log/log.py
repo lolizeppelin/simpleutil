@@ -302,12 +302,6 @@ def _setup_logging_from_conf(conf, project, version):
         # python2.6 calls the argument strm, in 2.7 it's stream
         streamlog = logging.StreamHandler(sys.stdout)
         log_root.addHandler(streamlog)
-    # :-:
-    # if conf.publish_errors:
-    #     handler = importutils.import_object(
-    #         "oslo_messaging.notify.log_handler.PublishErrorsHandler",
-    #         logging.ERROR)
-    #     log_root.addHandler(handler)
 
     if conf.use_syslog:
         global syslog
