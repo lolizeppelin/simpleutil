@@ -39,26 +39,6 @@ else:
     sys.setdefaultencoding('utf-8')
 
 
-if not hasattr(logging, '_checkLevel'):
-    # Patch for python 2.6 logging
-    def _checkLevel(level):
-        if isinstance(level, (int, long)):
-            rv = level
-        elif str(level) == level:
-            if level not in logging._levelNames:
-                raise ValueError("Unknown level: %r" % level)
-            rv = logging._levelNames[level]
-        else:
-            raise TypeError("Level not an integer or a valid string: %r" % level)
-        return rv
-    setattr(logging, '_checkLevel', _checkLevel)
-    def setLevel(self, level):
-        self.level = _checkLevel(level)
-
-    logging.Logger.setLevel = setLevel
-    logging.Handler.setLevel = setLevel
-
-
 if not hasattr(logging, '_warnings_showwarning'):
     setattr(logging, '_warnings_showwarning', None)
 
@@ -119,18 +99,6 @@ if not hasattr(logging, 'captureWarnings'):
 
     setattr(logging, 'captureWarnings', captureWarnings)
 
-
-if not hasattr(logging.Logger, 'isEnabledFor'):
-
-    def isEnabledFor(self, level):
-        """
-        Is this logger enabled for level 'level'?
-        """
-        if self.manager.disable >= level:
-            return 0
-        return level >= self.getEffectiveLevel()
-
-    setattr(logging.Logger, 'isEnabledFor', isEnabledFor)
 
 if not hasattr(logging.LoggerAdapter, 'isEnabledFor'):
 

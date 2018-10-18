@@ -157,39 +157,6 @@ class KeywordArgumentAdapter(BaseLoggerAdapter):
         # Place the updated extra values back into the keyword
         # arguments.
         kwargs['extra'] = extra
-
-        # NOTE(jdg): We would like an easy way to add resource info
-        # to logging, for example a header like 'volume-<uuid>'
-        # Turns out Nova implemented this but it's Nova specific with
-        # instance.  Also there's resource_uuid that's been added to
-        # context, but again that only works for Instances, and it
-        # only works for contexts that have the resource id set.
-        resource = kwargs['extra'].get('resource', None)
-        if resource:
-
-            # Many OpenStack resources have a name entry in their db ref
-            # of the form <resource_type>-<uuid>, let's just use that if
-            # it's passed in
-            if not resource.get('name', None):
-
-                # For resources that don't have the name of the format we wish
-                # to use (or places where the LOG call may not have the full
-                # object ref, allow them to pass in a dict:
-                # resource={'type': volume, 'id': uuid}
-
-                resource_type = resource.get('type', None)
-                resource_id = resource.get('id', None)
-
-                if resource_type and resource_id:
-                    kwargs['extra']['resource'] = ('[' + resource_type +
-                                                   '-' + resource_id + '] ')
-            else:
-                # FIXME(jdg): Since the name format can be specified via conf
-                # entry, we may want to consider allowing this to be configured
-                # here as well
-                kwargs['extra']['resource'] = ('[' + resource.get('name', '')
-                                               + '] ')
-
         return msg, kwargs
 
 def _create_logging_excepthook(product_name):
@@ -242,18 +209,11 @@ def register_options(conf):
 def setup(conf, product_name, version='unknown'):
     """Setup logging for the current application."""
 
-    # clean default stderr logging
-    for hd in logging.root.handlers:
-        logging.root.removeHandler(hd)
-
     if conf.log_config_append:
         _load_log_config(conf.log_config_append)
     else:
         _setup_logging_from_conf(conf, product_name, version)
     sys.excepthook = _create_logging_excepthook(product_name)
-
-    for name, adapter in six.iteritems(_loggers):
-        adapter.logger = logging.getLogger(name)
 
 
 def set_defaults(logging_context_format_string=None,
@@ -363,15 +323,11 @@ def _setup_logging_from_conf(conf, project, version):
                                                          version=version,
                                                          datefmt=datefmt,
                                                          config=conf))
-    # if conf.debug:
-    #     log_root.setLevel(logging.DEBUG)
-    # elif conf.verbose:
-    #     log_root.setLevel(logging.INFO)
     if conf.loglevel:
         try:
             lv = int(conf.loglevel)
         except ValueError:
-            lv = conf.loglevel.upper()
+            lv = logging._levelNames[conf.loglevel.upper()]
         log_root.setLevel(lv)
     else:
         log_root.setLevel(logging.WARNING)
@@ -379,19 +335,17 @@ def _setup_logging_from_conf(conf, project, version):
     for pair in conf.default_log_levels:
         mod, _sep, level_name = pair.partition('=')
         logger = logging.getLogger(mod)
-        numeric_level = None
         try:
             # NOTE(harlowja): integer's are valid level names, and for some
             # libraries they have a lower level than DEBUG that is typically
             # defined at level 5, so to make that accessible, try to convert
             # this to a integer, and if not keep the original...
             numeric_level = int(level_name)
+        except TypeError:
+            raise ValueError('Log level error')
         except ValueError:  # nosec
-            pass
-        if numeric_level is not None:
-            logger.setLevel(numeric_level)
-        else:
-            logger.setLevel(level_name)
+            numeric_level = logging._levelNames[level_name.upper()]
+        logger.setLevel(numeric_level)
 
 _loggers = {}
 
