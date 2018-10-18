@@ -35,10 +35,7 @@ DEFAULT_LOG_LEVELS = [
     'requests.packages.urllib3.connectionpool=WARN',
     'requests.packages.urllib3.util.retry=WARN',
     'urllib3.connectionpool=WARN', 'urllib3.util.retry=WARN',
-    'websocket=WARN',
-    'simpleutil=WARN',
-    'simpleservice.wsgi.service=INFO',
-    'simpleservice.ormdb.engines=WARN',
+    'websocket=WARN'
 ]
 
 _IGNORE_MESSAGE = "This option is ignored if log_config_append is set."
