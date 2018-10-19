@@ -35,6 +35,7 @@ DEFAULT_LOG_LEVELS = [
     'requests.packages.urllib3.connectionpool=WARN',
     'requests.packages.urllib3.util.retry=WARN',
     'urllib3.connectionpool=WARN', 'urllib3.util.retry=WARN',
+    'eventlet.wsgi=WARN',
     'websocket=WARN'
 ]
 
