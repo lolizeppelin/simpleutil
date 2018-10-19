@@ -324,7 +324,7 @@ def _setup_logging_from_conf(conf, project, version):
             lv = logging._levelNames[conf.loglevel.upper()]
         log_root.setLevel(lv)
     else:
-        log_root.setLevel(logging.WARNING)
+        log_root.setLevel(logging.INFO)
 
     for pair in conf.default_log_levels:
         mod, _sep, level_name = pair.partition('=')
