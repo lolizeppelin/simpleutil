@@ -89,10 +89,12 @@ class Gprimarykey(object):
         key = part_time | part_server | part_pid | self.__sequence
         return key
 
-    def timeformat(self, key):
+    @staticmethod
+    def timeformat(key):
         return key >> 22
 
-    def sidformat(self, key):
+    @staticmethod
+    def sidformat(key):
         return (key & (2047 << 11)) >> 11
 
 
