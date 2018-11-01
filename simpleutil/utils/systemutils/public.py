@@ -70,24 +70,19 @@ def subwait(sub, timeout=None):
         used_time = 0.0
         timeout = float(timeout) if timeout else None
         while True:
-            try:
-                # same as eventlet.green.os.wait
-                if sub.poll() is None:
-                    if timeout and used_time > timeout:
-                        sub.terminate()
-                        if sub.poll() is None:
-                            sub.kill()
-                        sub.wait()
-                        raise ExitBySIG('sub process exit with by signal, maybe timeout')
-                    eventlet.sleep(INTERVAL)
-                    used_time += INTERVAL
-                    continue
-                else:
-                    code = sub.wait()
-                    if code != 0:
-                        raise UnExceptExit('sub process exit code %d' % code)
-                    break
-            except OSError as exc:
-                if exc.errno not in (errno.EINTR, errno.ECHILD):
-                    raise OSError('waitpid get errorno %d' % exc.errno)
+            # same as eventlet.green
+            if sub.poll() is None:
+                if timeout and used_time > timeout:
+                    sub.terminate()
+                    if sub.poll() is None:
+                        sub.kill()
+                    sub.wait()
+                    raise ExitBySIG('sub process exit with by signal, maybe timeout')
+                eventlet.sleep(INTERVAL)
+                used_time += INTERVAL
                 continue
+            else:
+                code = sub.wait()
+                if code != 0:
+                    raise UnExceptExit('sub process exit code %d' % code)
+                break
