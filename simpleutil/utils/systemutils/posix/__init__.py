@@ -30,7 +30,7 @@ def _handle_exitstatus(sts, _WIFSIGNALED=os.WIFSIGNALED,
     # refer to anything outside of its local scope."""
     if _WIFSIGNALED(sts):
         sig = -_WTERMSIG(sts)
-        raise ExitBySIG('sub process exit with by signal, maybe timeout')
+        raise ExitBySIG('sub process exit with by signal %d, maybe timeout' % sig)
     elif _WIFEXITED(sts):
         return _WEXITSTATUS(sts)
     else:
