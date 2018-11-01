@@ -29,7 +29,8 @@ def _handle_exitstatus(sts, _WIFSIGNALED=os.WIFSIGNALED,
     # This method is called (indirectly) by __del__, so it cannot
     # refer to anything outside of its local scope."""
     if _WIFSIGNALED(sts):
-        return -_WTERMSIG(sts)
+        sig = -_WTERMSIG(sts)
+        raise ExitBySIG('sub process exit with by signal, maybe timeout')
     elif _WIFEXITED(sts):
         return _WEXITSTATUS(sts)
     else:
@@ -84,10 +85,8 @@ def wait(pid, timeout=None):
         raise UnExceptExit('sup process waitpid get errorno ECHILD')
     if kill:
         raise ExitBySIG('sub process exit with by signal, maybe timeout')
-    if returncode > 0:
+    if returncode != 0:
         raise UnExceptExit('sup process exit code %d' % returncode)
-    if returncode < 0:
-        raise ExitBySIG('sub process exit with by signal, maybe timeout')
 
 
 def is_admin():
