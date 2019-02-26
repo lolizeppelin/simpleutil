@@ -407,3 +407,15 @@ def check_string_length(value, name=None, min_length=0, max_length=None):
         msg = "%(name)s has %(length)s characters, more than %(max_length)s." % \
               {'name': name, 'length': length, 'max_length': max_length}
         raise ValueError(msg)
+
+
+def segmented(iterable):
+
+    def _seg(width):
+        it = iterable
+        while len(it) > width:
+            yield it[:width]
+            it = it[width:]
+        yield it
+
+    return _seg
