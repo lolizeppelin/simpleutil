@@ -292,7 +292,6 @@ def _validate_folder_path(value):
     elif not os.path.isdir(value):
         raise ValueError('%s not a path of folder' % value)
     if os.path.abspath(value) != value:
-        print value
         raise ValueError('Path value must be abspath')
     free_bytes_of_partion = systemutils.get_partion_free_bytes(partion_path)
     if free_bytes_of_partion < 104857600:
