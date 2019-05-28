@@ -34,8 +34,7 @@ Requires:       unzip >= 5.0
 
 %if 0%{?rhel} > 6
 Requires:       python-jsonschema > 2.5.0, python-jsonschema < 3.0.0
-%endif
-%if 0%{?rhel} < 7
+%else
 Requires:       python-jsonschema >= 2.0.0, python-jsonschema < 2.5.0
 Requires:       python-importlib >= 1.0
 %endif
